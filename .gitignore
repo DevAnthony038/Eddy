@@ -1,0 +1,7 @@
+# Local user data / secrets — never commit
+data/
+chat_log.json
+
+# Python artifacts
+__pycache__/
+*.pyc

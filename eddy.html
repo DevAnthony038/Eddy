@@ -1,0 +1,2233 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Eddy</title>
+<link rel="icon" type="image/svg+xml" href="icon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+<style>
+/* ---------------------------------------------------------
+   tokens — black base, blue is an accent and nothing more
+   --------------------------------------------------------- */
+:root{
+  --font:"Inter","Segoe UI",system-ui,-apple-system,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --sidebar-w:260px;
+  --dur:140ms;
+}
+:root,:root[data-theme="dark"]{
+  --bg:#08080A;
+  --panel:#0D0D10;
+  --raise:#151519;
+  --hover:#1C1C21;
+  --line:#242429;
+  --line-2:#33333A;
+  --text:#EDEDF0;
+  --text-2:#9A9AA4;
+  --text-3:#6A6A74;
+  --blue:#3B7BFF;
+  --blue-dim:#2A5BC7;
+  --blue-wash:rgba(59,123,255,.12);
+  --on-blue:#FFFFFF;
+  --red:#F4736E;
+  --code-bg:#0B0B0E;
+}
+:root[data-theme="light"]{
+  --bg:#FFFFFF;
+  --panel:#F7F7F8;
+  --raise:#FFFFFF;
+  --hover:#ECECEF;
+  --line:#E2E2E6;
+  --line-2:#CFCFD6;
+  --text:#121214;
+  --text-2:#5C5C66;
+  --text-3:#83838E;
+  --blue:#1F5FE0;
+  --blue-dim:#1A4DB8;
+  --blue-wash:rgba(31,95,224,.10);
+  --on-blue:#FFFFFF;
+  --red:#C4403C;
+  --code-bg:#0B0B0E;
+}
+
+*,*::before,*::after{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;background:var(--bg);color:var(--text);
+  font-family:var(--font);font-size:calc(15px * var(--fs,1));line-height:1.62;
+  -webkit-font-smoothing:antialiased;overflow:hidden;
+}
+button,input,textarea{font:inherit;color:inherit}
+button{background:none;border:0;cursor:pointer}
+:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+::-webkit-scrollbar{width:9px;height:9px}
+::-webkit-scrollbar-thumb{background:var(--line-2);border-radius:9px;border:3px solid transparent;background-clip:content-box}
+::-webkit-scrollbar-track{background:transparent}
+.icon{width:18px;height:18px;flex:0 0 auto;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;fill:none}
+.sr{position:absolute;width:1px;height:1px;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+.app{display:flex;height:100dvh;overflow:hidden}
+
+/* ---------------------------------------------------------
+   sidebar — square panel, square rows
+   --------------------------------------------------------- */
+.sidebar{
+  width:var(--sidebar-w);flex:0 0 var(--sidebar-w);display:flex;flex-direction:column;
+  background:var(--panel);border-right:1px solid var(--line);
+  transition:margin-left var(--dur) ease;position:relative;
+}
+.app[data-rail="closed"] .sidebar{margin-left:calc(var(--sidebar-w) * -1)}
+
+.brand{display:flex;align-items:center;gap:10px;padding:14px 16px;height:52px}
+.mark{width:22px;height:22px;color:var(--blue)}
+.brand b{font-weight:600;font-size:.95rem;letter-spacing:-.01em}
+.brand .sbtn{margin-left:auto}
+
+#searchDialog{width:min(560px,calc(100vw - 28px))}
+.sfield{position:relative;margin-top:14px}
+.sfield .icon{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--text-3);width:16px;height:16px}
+.sfield input{
+  width:100%;height:40px;padding:0 12px 0 36px;border-radius:8px;
+  background:var(--bg);border:1px solid var(--line);color:var(--text);font-size:.88rem;
+}
+.sfield input::placeholder{color:var(--text-3)}
+.sfield input:focus{border-color:var(--blue);outline:none}
+input[type="search"]{-webkit-appearance:none;appearance:none}
+input[type="search"]::-webkit-search-decoration,
+input[type="search"]::-webkit-search-cancel-button{-webkit-appearance:none;appearance:none;display:none}
+.sc-head{padding:14px 2px 4px;font-size:.72rem;letter-spacing:.02em;color:var(--text-3)}
+#searchResults{max-height:min(46dvh,380px);overflow-y:auto;margin-top:2px;padding-bottom:4px}
+#searchDialog .row{padding:0 8px;border-left:0;border-top:1px solid var(--line)}
+#searchDialog .row:first-child{border-top:0}
+#searchDialog .row[aria-current="true"]{border-left:0;background:var(--hover);color:var(--text)}
+#searchDialog .blank{padding:14px 8px}
+
+.pad{padding:12px}
+.new{
+  display:flex;align-items:center;gap:8px;width:100%;height:36px;padding:0 12px;
+  border:1px solid var(--line);border-radius:8px;color:var(--text);font-size:.86rem;
+  transition:border-color var(--dur),background var(--dur);
+}
+.new:hover{background:var(--hover);border-color:var(--blue)}
+.new .icon{color:var(--blue)}
+
+.chats{flex:1;overflow-y:auto;padding-bottom:8px}
+.group{padding:14px 16px 6px;font-size:.72rem;color:var(--text-3);letter-spacing:.02em}
+.row{
+  display:flex;align-items:center;gap:6px;width:100%;min-height:36px;padding:0 8px 0 16px;
+  color:var(--text-2);border-left:2px solid transparent;
+}
+.row:hover{background:var(--hover);color:var(--text)}
+.row[aria-current="true"]{background:var(--hover);color:var(--text);border-left-color:var(--blue)}
+.row-title{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.86rem;text-align:left;padding:6px 0}
+.row-act{width:28px;height:28px;border-radius:6px;display:grid;place-items:center;color:var(--text-3);opacity:0}
+.row:hover .row-act,.row:focus-within .row-act{opacity:1}
+.row-act:hover{background:var(--bg);color:var(--text)}
+.row-act .icon{width:15px;height:15px}
+.rename{flex:1;min-width:0;background:var(--bg);border:1px solid var(--blue);border-radius:6px;padding:4px 6px;font-size:.86rem}
+.blank{padding:20px 16px;color:var(--text-3);font-size:.83rem}
+
+.foot{border-top:1px solid var(--line);padding:8px 10px;display:flex;align-items:center;gap:4px}
+.foot .name{flex:1;font-size:.8rem;color:var(--text-3);padding-left:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:flex;align-items:center;min-width:0}
+.foot .name.on{color:var(--text-2)}
+.avatar{width:20px;height:20px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:.68rem;font-weight:700;color:#fff;background:#5E4BC9;flex:0 0 auto;text-transform:uppercase;user-select:none;letter-spacing:.01em;overflow:hidden}
+.avatar img{width:100%;height:100%;border-radius:50%;object-fit:cover;display:block}
+.avatar.xl{width:44px;height:44px;font-size:1.05rem}
+.foot .fc-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;padding-left:6px}
+.pic-row{display:flex;align-items:center;gap:12px;margin-top:8px}
+.pic-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+
+.scrim{position:fixed;inset:0;background:rgba(0,0,0,.6);opacity:0;pointer-events:none;transition:opacity var(--dur);z-index:30}
+.scrim.on{opacity:1;pointer-events:auto}
+
+/* ---------------------------------------------------------
+   main
+   --------------------------------------------------------- */
+.main{flex:1;min-width:0;display:flex;flex-direction:column;position:relative}
+.topbar{display:flex;align-items:center;gap:4px;height:52px;padding:0 10px}
+.topbar h1{flex:1;min-width:0;margin:0 6px;font-size:.88rem;font-weight:500;color:var(--text-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+.ibtn{width:36px;height:36px;border-radius:8px;display:grid;place-items:center;color:var(--text-2);transition:background var(--dur),color var(--dur)}
+.ibtn:hover{background:var(--hover);color:var(--text)}
+
+.picker{position:relative}
+.picker-btn{display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 10px;border-radius:8px;color:var(--text-2);font-size:.84rem}
+.picker-btn:hover{background:var(--hover);color:var(--text)}
+.picker-btn .icon{width:14px;height:14px}
+.menu{
+  position:absolute;right:0;top:calc(100% + 6px);min-width:240px;z-index:40;
+  background:var(--raise);border:1px solid var(--line-2);border-radius:10px;
+  box-shadow:0 20px 40px -24px #000;padding:5px;display:none;
+}
+.menu.open{display:block}
+.mi{display:flex;gap:10px;align-items:flex-start;width:100%;text-align:left;padding:9px 10px;border-radius:6px;color:var(--text-2)}
+.mi:hover{background:var(--hover)}
+.mi strong{display:block;font-weight:500;font-size:.86rem;color:var(--text)}
+.mi em{font-style:normal;font-size:.76rem;color:var(--text-3);line-height:1.4}
+.mi .icon{width:15px;height:15px;margin-top:3px;color:var(--blue);opacity:0}
+.mi[aria-checked="true"] .icon{opacity:1}
+
+/* ---------------------------------------------------------
+   thread — a transcript, not a stack of cards
+   --------------------------------------------------------- */
+.thread{flex:1;overflow-y:auto;padding:24px 20px 0}
+.inner{max-width:720px;margin:0 auto;padding-bottom:28px}
+
+.msg{padding:16px 0;border-top:1px solid var(--line)}
+.msg:first-child{border-top:0}
+.who{display:flex;align-items:center;gap:7px;font-size:.76rem;color:var(--text-3);margin-bottom:8px}
+.msg.assistant .who{color:var(--blue)}
+.msg.assistant .who .icon{width:14px;height:14px}
+.text{overflow-wrap:anywhere}
+.msg.user .text{color:var(--text)}
+.text > *:first-child{margin-top:0}
+.text > *:last-child{margin-bottom:0}
+.text p{margin:0 0 .8em}
+.text h1,.text h2,.text h3{line-height:1.3;margin:1.15em 0 .45em;font-weight:600}
+.text h1{font-size:1.2rem}.text h2{font-size:1.08rem}.text h3{font-size:.98rem}
+.text ul,.text ol{margin:0 0 .8em;padding-left:1.3em}
+.text li{margin:.25em 0}
+.text a{color:var(--blue);text-underline-offset:3px}
+.text blockquote{margin:0 0 .8em;padding-left:14px;border-left:2px solid var(--line-2);color:var(--text-2)}
+.text hr{border:0;border-top:1px solid var(--line);margin:1.1em 0}
+.text code{font-family:var(--mono);font-size:.85em;background:var(--hover);padding:1px 5px;border-radius:4px}
+.text table{width:100%;border-collapse:collapse;margin:0 0 .8em;font-size:.88rem;display:block;overflow-x:auto}
+.text th,.text td{border:1px solid var(--line);padding:7px 10px;text-align:left}
+.text th{background:var(--hover);font-weight:500}
+
+.code{margin:0 0 .85em;border:1px solid var(--line);border-radius:6px;overflow:hidden;background:var(--code-bg)}
+.code-head{display:flex;align-items:center;justify-content:space-between;padding:5px 6px 5px 12px;border-bottom:1px solid var(--line)}
+.code-lang{font-family:var(--mono);font-size:.72rem;color:#6F6F7A}
+.code-copy{display:inline-flex;align-items:center;gap:6px;height:26px;padding:0 8px;border-radius:5px;font-size:.74rem;color:#8E8E99}
+.code-copy:hover{background:#17171C;color:#D8D8E0}
+.code-copy .icon{width:14px;height:14px}
+.code pre{margin:0;padding:14px;overflow-x:auto}
+.code code{font-family:var(--mono);font-size:.82rem;background:none;padding:0;color:#D5D5DE;line-height:1.62}
+.tok-key{color:#7FA6FF}.tok-str{color:#9BD6A2}.tok-num{color:#E0BB80}.tok-com{color:#5E5E69;font-style:italic}
+
+.caret{display:inline-block;width:7px;height:1em;vertical-align:-2px;margin-left:2px;background:var(--blue);animation:blink 1s steps(2) infinite}
+@keyframes blink{50%{opacity:0}}
+.wait{display:inline-flex;gap:5px;align-items:center;color:var(--text-3);font-size:.86rem}
+.wait i{width:5px;height:5px;border-radius:50%;background:currentColor;animation:bb 1.1s infinite}
+.wait i:nth-child(2){animation-delay:.14s}.wait i:nth-child(3){animation-delay:.28s}
+@keyframes bb{0%,60%,100%{opacity:.35}30%{opacity:1}}
+
+.tools{display:flex;gap:1px;margin-top:8px;opacity:0;transition:opacity var(--dur)}
+.msg:hover .tools,.msg:focus-within .tools{opacity:1}
+.tool{width:30px;height:30px;border-radius:6px;display:grid;place-items:center;color:var(--text-3)}
+.tool:hover{background:var(--hover);color:var(--text)}
+.tool[aria-pressed="true"]{color:var(--blue)}
+.tool .icon{width:15px;height:15px}
+.editor{width:100%;min-height:86px;border-radius:8px;background:var(--raise);border:1px solid var(--blue);color:var(--text);padding:10px 12px;resize:vertical;font-family:var(--font)}
+.erow{display:flex;gap:8px;margin-top:8px}
+
+.files{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}
+.chip{display:inline-flex;align-items:center;gap:6px;height:26px;padding:0 9px;border-radius:6px;background:var(--hover);border:1px solid var(--line);font-size:.75rem;color:var(--text-2);max-width:100%}
+.chip span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.chip .icon{width:13px;height:13px}
+.chip button{color:var(--text-3);display:grid;place-items:center}
+.chip button:hover{color:var(--red)}
+
+/* empty state */
+.start{max-width:720px;margin:0 auto;padding:12vh 0 40px}
+.start h2{margin:0 0 6px;font-size:1.5rem;font-weight:600;letter-spacing:-.01em}
+.start p{margin:0 0 26px;color:var(--text-2);font-size:.92rem;max-width:50ch}
+.app[data-empty="true"] .thread{flex:1 1 auto;margin-top:auto}
+#greet{display:none;max-width:720px;padding:0 20px;text-align:center;font-size:1.5rem;font-weight:600;letter-spacing:-.01em}
+.g-body{position:relative;display:inline-block}
+.g-body .wave{
+  display:none;
+  position:absolute;
+  left:50%;
+  bottom:-7px;
+  height:7px;
+  overflow:visible;
+  transform:translateX(-50%);
+}
+.g-body .wave path{stroke:var(--blue);stroke-width:1.6;fill:none;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:1;stroke-dashoffset:1}
+@keyframes wave-draw{to{stroke-dashoffset:0}}
+.app[data-empty="true"] .g-body .wave{display:block}
+.app[data-empty="true"] .g-body .wave path{
+  animation:wave-draw .9s cubic-bezier(.4,0,.2,1) .15s forwards;
+}
+.app[data-empty="true"] #greet{display:block;position:absolute;left:0;right:0;width:100%;max-width:720px;margin:0 auto;bottom:calc(100% + 16px)}
+.app[data-empty="true"] .cwrap{flex:1 1 auto;margin-bottom:auto;position:relative}
+.suggest{border-top:1px solid var(--line)}
+.suggest button{
+  display:flex;align-items:center;gap:10px;width:100%;text-align:left;padding:13px 2px;
+  border-bottom:1px solid var(--line);color:var(--text-2);font-size:.9rem;transition:color var(--dur),padding var(--dur);
+}
+.suggest button:hover{color:var(--text);padding-left:8px}
+.suggest .icon{width:15px;height:15px;color:var(--text-3)}
+.suggest button:hover .icon{color:var(--blue)}
+
+.jump{
+  position:absolute;left:50%;transform:translateX(-50%);bottom:calc(var(--ch,132px) + 10px);
+  width:32px;height:32px;border-radius:50%;background:var(--raise);border:1px solid var(--line-2);
+  color:var(--text-2);display:grid;place-items:center;z-index:9;opacity:0;pointer-events:none;transition:opacity var(--dur);
+}
+.jump.show{opacity:1;pointer-events:auto}
+.jump:hover{color:var(--text)}
+
+/* ---------------------------------------------------------
+   composer — this is the rounded one
+   --------------------------------------------------------- */
+.cwrap{padding:10px 20px 18px;background:var(--bg)}
+.composer{
+  position:relative;
+  max-width:720px;margin:0 auto;background:var(--raise);border:1px solid var(--line-2);
+  border-radius:24px;padding:10px 10px 8px;transition:border-color var(--dur);
+}
+.composer:focus-within{border-color:var(--blue)}
+.composer textarea{width:100%;max-height:210px;min-height:26px;border:0;background:none;resize:none;outline:none;padding:4px 8px;color:var(--text)}
+.composer textarea::placeholder{color:var(--text-3)}
+.crow{display:flex;align-items:center;gap:2px;padding-top:2px}
+.hint{flex:1;font-size:.72rem;color:var(--text-3);padding-left:8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.send{width:34px;height:34px;border-radius:50%;background:var(--blue);color:var(--on-blue);display:grid;place-items:center;transition:background var(--dur),opacity var(--dur)}
+.send:hover{background:var(--blue-dim)}
+.send .icon{width:16px;height:16px;stroke-width:2}
+.send:disabled{opacity:.3;cursor:not-allowed}
+.send.stop{background:var(--red)}
+
+/* ---------------------------------------------------------
+   dialogs, toasts
+   --------------------------------------------------------- */
+dialog{
+  border:1px solid var(--line-2);background:var(--raise);color:var(--text);border-radius:12px;padding:0;
+  width:min(520px,calc(100vw - 28px));
+  opacity:0;scale:.97;transition:opacity 160ms ease,scale 160ms ease;
+}
+dialog[open]{opacity:1;scale:1}
+dialog.closing{opacity:0;scale:.97}
+dialog::backdrop{background:rgba(0,0,0,.66);opacity:0;transition:opacity 160ms ease}
+dialog[open]::backdrop{opacity:1}
+dialog.closing::backdrop{opacity:0}
+@starting-style{dialog[open]{opacity:0;scale:.97}}
+@starting-style{dialog[open]::backdrop{opacity:0}}
+.dhead{display:flex;align-items:center;justify-content:space-between;padding:16px 16px 12px;border-bottom:1px solid var(--line)}
+.dhead h2{margin:0;font-size:.98rem;font-weight:600}
+.dbody{padding:4px 18px 18px;max-height:min(66dvh,540px);overflow-y:auto}
+.field{padding:16px 0;border-bottom:1px solid var(--line)}
+.field:last-child{border-bottom:0}
+.fhead{display:flex;align-items:center;justify-content:space-between;gap:16px}
+.field label{font-size:.88rem;font-weight:500}
+.help{font-size:.78rem;color:var(--text-3);margin-top:3px;max-width:44ch}
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus{
+  -webkit-box-shadow:0 0 0 1000px var(--bg) inset;
+  box-shadow:0 0 0 1000px var(--bg) inset;
+  -webkit-text-fill-color:var(--text);
+  caret-color:var(--text);
+  transition:background-color 9999s ease-in-out 0s;
+  background-image:linear-gradient(var(--bg),var(--bg)) !important;
+}
+.field textarea{width:100%;margin-top:10px;background:var(--bg);border:1px solid var(--line-2);border-radius:7px;padding:9px 11px;color:var(--text);resize:vertical;font-family:var(--font);font-size:.86rem}
+.field textarea:focus{border-color:var(--blue);outline:none}
+.field input[type="text"]{width:100%;height:32px;margin-top:10px;background:var(--bg);border:1px solid var(--line-2);border-radius:7px;padding:0 11px;color:var(--text);font-family:var(--font);font-size:.86rem}
+.field input[type="text"]:focus{border-color:var(--blue);outline:none}
+.field input[type="text"]:hover{border-color:var(--line)}
+.seg{display:inline-flex;position:relative;border:1px solid var(--line);border-radius:7px;overflow:hidden;flex:0 0 auto;background:var(--bg)}
+.seg-thumb{position:absolute;top:0;bottom:0;left:0;width:0;background:var(--hover);box-shadow:inset 0 0 0 1px var(--line-2);border-radius:0;pointer-events:none;z-index:0;transition:transform 160ms ease,width 160ms ease,border-radius 160ms ease}
+.seg button{height:28px;padding:0 11px;font-size:.79rem;color:var(--text-2);border-left:1px solid var(--line);display:flex;align-items:center;gap:6px;white-space:nowrap;position:relative;z-index:1;background:transparent}
+.seg button:first-child{border-left:0;border-radius:6px 0 0 6px}
+.seg button:last-child{border-radius:0 6px 6px 0}
+.seg button:only-child{border-radius:6px}
+.seg button:hover{color:var(--text)}
+.seg button[aria-pressed="true"],.seg button[aria-checked="true"]{color:var(--text);border-color:var(--line-2)}
+.seg.icons button{width:36px;padding:0;justify-content:center}
+.seg.icons .icon{width:15px;height:15px}
+.switch{width:42px;height:24px;border-radius:12px;background:var(--bg);border:1px solid var(--line);position:relative;flex:0 0 auto}
+.switch::after{content:"";position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:var(--text-3);transition:transform var(--dur),background var(--dur)}
+.switch[aria-checked="true"]{background:var(--blue);border-color:var(--blue)}
+.switch[aria-checked="true"]::after{transform:translateX(18px);background:var(--on-blue)}
+.tbtn{display:inline-flex;align-items:center;justify-content:center;gap:6px;height:32px;padding:0 12px;border:1px solid var(--line-2);border-radius:7px;font-size:.82rem;color:var(--text-2);background:transparent;white-space:nowrap}
+.tbtn:hover{background:var(--hover);color:var(--text)}
+.tbtn.danger:hover{color:var(--red);border-color:var(--red)}
+.tbtn.primary{background:var(--blue);border-color:var(--blue);color:var(--on-blue)}
+.tbtn.primary:hover{background:var(--blue-dim)}
+.keys{display:grid;grid-template-columns:1fr auto;gap:12px 16px;align-items:center;font-size:.86rem;padding:14px 0}
+.keys span{color:var(--text-2)}
+kbd{font-family:var(--mono);font-size:.72rem;background:var(--bg);border:1px solid var(--line-2);border-radius:4px;padding:2px 6px;color:var(--text-2)}
+
+/* settings dialog — two-column layout */
+#settingsDialog{width:min(680px,calc(100vw - 28px))}
+.set-body{position:relative;display:grid;grid-template-columns:176px 1fr;height:min(70dvh,600px);min-height:420px}
+.set-side{display:flex;flex-direction:column;min-height:0;border-right:1px solid var(--line);background:var(--bg)}
+.set-search{padding:12px 10px 4px}
+.set-search.sfield{margin-top:0}
+.set-search.sfield .icon{left:17px;width:14px;height:14px}
+.set-search.sfield input{height:32px;padding:0 12px 0 31px;border-radius:7px;font-size:.84rem}
+.set-nav-hdr{font-size:.68rem;font-weight:600;letter-spacing:.04em;color:var(--text-3);padding:4px 12px 2px;margin:0 0 2px}
+.set-nav{display:flex;flex-direction:column;gap:2px;flex:1;padding:2px 8px 10px;overflow-y:auto}
+.set-nav-btn.hide{display:none}
+.set-close{position:absolute;top:8px;right:8px;z-index:5}
+.set-empty{display:none;padding:46px 22px;color:var(--text-2);font-size:.86rem;text-align:center}
+.set-empty.show{display:block}
+.set-nav-btn{
+  display:flex;align-items:center;gap:9px;width:100%;padding:7px 10px;border-radius:7px;
+  font-size:.84rem;color:var(--text-2);text-align:left;
+}
+.set-nav-btn .icon{width:15px;height:15px}
+.set-nav-btn:hover{background:var(--hover);color:var(--text)}
+.set-nav-btn[aria-current="true"]{background:var(--hover);color:var(--text);box-shadow:inset 0 0 0 1px var(--line-2)}
+.set-pane{display:none;padding:12px 22px 22px;overflow-y:auto}
+.set-pane.on{display:block}
+.set-hdr{font-size:1.05rem;font-weight:600;margin:2px 0 0}
+.sec-title{font-size:.76rem;font-weight:600;color:var(--text-2);padding:20px 0 2px;margin:0}
+.set-hdr + .sec-title{padding-top:16px}
+.sec-title + .field{margin-top:0}
+.set-pane .field:last-child{border-bottom:0}
+.set-pane .field textarea{font-family:var(--font)}
+.set-select{
+  height:32px;padding:0 30px 0 10px;border:1px solid var(--line-2);border-radius:7px;
+  background:var(--bg);color:var(--text);font-size:.84rem;font-family:var(--font);cursor:pointer;
+  appearance:none;-webkit-appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238A8A93' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 9px center;
+}
+.set-select:hover{border-color:var(--line)}
+.set-select:focus{outline:none;border-color:var(--blue)}
+.auth-note{border:1px solid var(--line);border-radius:9px;background:var(--bg);padding:14px;margin:10px 0 0}
+.auth-note p{margin:0 0 12px;font-size:.84rem;color:var(--text-2);line-height:1.5}
+.auth-note .actions{display:flex;gap:8px}
+
+.hide{display:none!important}
+
+/* top-level auth screen (login / registration) */
+.auth-screen{position:fixed;inset:0;display:grid;place-items:center;background:var(--bg);z-index:70;padding:24px}
+.auth-card{width:min(360px,100%);display:flex;flex-direction:column;align-items:flex-start}
+.auth-card .mark{width:46px;height:46px;align-self:center;margin:0 0 10px}
+.auth-card .auth-brand{align-self:center;font-size:1.15rem;font-weight:600;letter-spacing:.01em;margin:0 0 24px}
+.auth-head{margin:0 0 10px;font-size:.95rem;font-weight:600}
+.auth-tabs{display:flex;gap:4px}
+.auth-card .auth-tabs{width:100%;padding:0;margin:0 0 14px}
+.auth-card .auth-form{width:100%;padding:0}
+.auth-tab{flex:1;height:32px;border-radius:7px;font-size:.86rem;color:var(--text-2)}
+.auth-tab:hover{background:var(--hover);color:var(--text)}
+.auth-tab[aria-selected="true"]{background:var(--hover);color:var(--text);box-shadow:inset 0 0 0 1px var(--line-2)}
+.auth-form{display:flex;flex-direction:column;gap:12px}
+.auth-form .fld-wrap label{display:block;font-size:.8rem;color:var(--text-2);margin-bottom:5px}
+.fld{width:100%;height:32px;padding:0 11px;background:var(--bg);border:1px solid var(--line-2);border-radius:7px;color:var(--text);font-size:.86rem}
+.fld:hover{border-color:var(--line)}
+.fld:focus{border-color:var(--blue);outline:none}
+.auth-err{font-size:.8rem;color:var(--red);min-height:1em;line-height:1.4}
+.auth-submit{width:100%}
+.auth-switch{font-size:.8rem;color:var(--text-2);text-align:center;margin-top:-2px}
+.auth-switch button{color:var(--blue);font-size:.8rem}
+.auth-switch button:hover{text-decoration:underline}
+
+/* confirm dialog */
+#confirmDialog{width:min(400px,calc(100vw - 28px))}
+.confirm-body{padding:18px}
+.confirm-body .confirm-title{margin:0 0 8px;font-size:.95rem;font-weight:600}
+.confirm-body p{margin:0 0 16px;font-size:.85rem;color:var(--text-2);line-height:1.5}
+.confirm-body .confirm-warn{color:var(--red);font-size:.82rem;display:block;margin-top:-8px;margin-bottom:14px}
+.confirm-actions{display:flex;justify-content:flex-end;gap:8px}
+.account-row{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:10px 0}
+#userEmail{color:var(--text-2)}
+.account-row .who{display:flex;align-items:center;gap:8px;font-size:.84rem;color:var(--text-2);min-width:0}
+.account-row .who b{color:var(--text);font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tbtn.danger-sub{color:var(--text-2)}
+.tbtn.danger-sub:hover{color:var(--red);border-color:var(--red);background:none}
+
+.toasts{position:fixed;top:18px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;gap:6px;z-index:80;align-items:center;pointer-events:none}
+.toast{background:var(--raise);border:1px solid var(--line-2);border-radius:8px;padding:8px 14px;font-size:.82rem}
+.toast[data-kind="error"]{border-color:var(--red);color:var(--red)}
+
+@media (max-width:860px){
+  .sidebar{position:fixed;inset:0 auto 0 0;z-index:40}
+  .thread{padding:16px 14px 0}
+  .cwrap{padding:8px 12px 12px}
+  .picker-btn .label{display:none}
+  .start{padding-top:8vh}
+  .set-body{grid-template-columns:1fr;height:auto;max-height:min(78dvh,620px);min-height:0}
+  .set-side{border-right:0;border-bottom:1px solid var(--line);flex:none}
+  .set-search{padding-right:46px}
+  .set-nav{flex-direction:row;gap:2px;flex:none;padding:2px 8px 8px;overflow-x:auto}
+  .set-nav-btn{flex:0 0 auto}
+  .set-pane{padding:8px 16px 16px}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms !important;animation-iteration-count:1 !important;transition-duration:.01ms !important}
+}
+</style>
+</head>
+<body>
+
+<div class="auth-screen" id="authScreen">
+  <div class="auth-card">
+    <svg class="mark" width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg" fill="none" aria-hidden="true">
+      <path d="M160 140 H340
+               M160 256 H300
+               M160 372 H340" stroke="#0066ff" stroke-opacity="0.2" stroke-width="70" stroke-linecap="round" stroke-linejoin="round"></path>
+      <path d="M160 140 H340
+               M160 256 H300
+               M160 372 H340" stroke="#0066ff" stroke-width="42" stroke-linecap="round" stroke-linejoin="round"></path>
+    </svg>
+    <b class="auth-brand">Eddy</b>
+    <h2 class="auth-head" id="authHead" data-i18n="login">Log in</h2>
+    <div class="auth-tabs" role="tablist">
+      <button class="auth-tab" id="authTabLogin" role="tab" aria-selected="true" data-i18n="login">Log in</button>
+      <button class="auth-tab" id="authTabRegister" role="tab" aria-selected="false" data-i18n="register">Create account</button>
+    </div>
+    <form class="auth-form" id="authForm" novalidate>
+      <div class="fld-wrap">
+        <label for="authEmail" data-i18n="authEmail">Email</label>
+        <input class="fld" id="authEmail" name="email" type="email" inputmode="email" maxlength="254" required autocomplete="email" autocorrect="off" autocapitalize="off" spellcheck="false" data-i18n-ph="authEmailPh">
+      </div>
+      <div class="fld-wrap" id="authNameWrap" style="display:none">
+        <label for="authName" data-i18n="authName">Name</label>
+        <input class="fld" id="authName" name="name" type="text" maxlength="60" required autocomplete="off">
+      </div>
+      <div class="fld-wrap">
+        <label for="authPass" data-i18n="authPass">Password</label>
+        <input class="fld" id="authPass" name="password" type="password" minlength="6" required autocomplete="current-password">
+      </div>
+      <div class="fld-wrap" id="authPass2Wrap" style="display:none">
+        <label for="authPass2" data-i18n="authConfirm">Confirm password</label>
+        <input class="fld" id="authPass2" type="password" minlength="6" autocomplete="new-password">
+      </div>
+      <p class="auth-err" id="authErr" role="alert"></p>
+      <button class="tbtn primary auth-submit" type="submit" id="authSubmit" data-i18n="login">Log in</button>
+      <p class="auth-switch"><button type="button" id="authSwitchBtn" data-i18n="switchToRegister">No account? Create one.</button></p>
+    </form>
+  </div>
+</div>
+
+<div class="app hide" id="app" data-rail="open">
+
+  <aside class="sidebar" id="sidebar" aria-label="Conversations">
+    <div class="brand">
+      <svg class="mark" width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg" fill="none" aria-hidden="true">
+        <path d="M160 140 H340 
+                 M160 256 H300 
+                 M160 372 H340" stroke="#0066ff" stroke-opacity="0.2" stroke-width="70" stroke-linecap="round" stroke-linejoin="round"></path>
+        <path d="M160 140 H340 
+                 M160 256 H300 
+                 M160 372 H340" stroke="#0066ff" stroke-width="42" stroke-linecap="round" stroke-linejoin="round"></path>
+      </svg>
+      <b>Eddy</b>
+      <button class="ibtn sbtn" id="searchBtn" data-i18n-aria="search" aria-label="Search chats" aria-expanded="false">
+        <svg class="icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+      </button>
+    </div>
+
+    <div class="pad">
+      <button class="new" id="newChatBtn">
+        <svg class="icon" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+        <span data-i18n="newChat">New chat</span>
+      </button>
+    </div>
+
+    <nav class="chats" id="chatList" aria-label="Chat history"></nav>
+
+    <div class="foot">
+      <span class="name" id="footName"></span>
+      <button class="ibtn" id="shortcutsBtn" data-i18n-aria="shortcuts" aria-label="Keyboard shortcuts">
+        <svg class="icon" viewBox="0 0 24 24"><rect x="2.5" y="6.5" width="19" height="11" rx="2"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M8 14h8"/></svg>
+      </button>
+      <button class="ibtn" id="settingsBtn" data-i18n-aria="settings" aria-label="Settings">
+        <svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-1.8-.3 1.6 1.6 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1A1.6 1.6 0 0 0 9 19.4a1.6 1.6 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0 .3-1.8 1.6 1.6 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1A1.6 1.6 0 0 0 4.6 9a1.6 1.6 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 1.8.3H9a1.6 1.6 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 1 1.5 1.6 1.6 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8V9a1.6 1.6 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1z"/></svg>
+      </button>
+    </div>
+  </aside>
+
+  <div class="scrim" id="scrim"></div>
+
+  <main class="main">
+    <header class="topbar">
+      <button class="ibtn" id="railBtn" data-i18n-aria="toggleSidebar" aria-label="Toggle sidebar" aria-expanded="true">
+        <svg class="icon" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9.5 4v16"/></svg>
+      </button>
+      <h1 id="threadTitle">New chat</h1>
+
+      <div class="picker">
+        <button class="picker-btn" id="modeBtn" aria-haspopup="true" aria-expanded="false">
+          <span class="label" id="modeLabel">Balanced</span>
+          <svg class="icon" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+        <div class="menu" id="modeMenu" role="menu" aria-label="Answer mode"></div>
+      </div>
+
+      <button class="ibtn" id="themeBtn" data-i18n-aria="switchTheme" aria-label="Switch theme">
+        <svg class="icon" viewBox="0 0 24 24" id="themeIcon"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z"/></svg>
+      </button>
+    </header>
+
+    <div class="thread" id="thread">
+      <div class="inner" id="messages"></div>
+    </div>
+
+    <button class="jump" id="jumpBtn" aria-label="Jump to latest" data-i18n-aria="jumpLatest">
+      <svg class="icon" viewBox="0 0 24 24"><path d="M12 5v14M6 13l6 6 6-6"/></svg>
+    </button>
+
+    <div class="cwrap" id="cwrap">
+      <div id="greet" class="greet">
+        <span class="g-body">
+          <span id="greetText"></span>
+          <svg class="wave" viewBox="0 0 120 8" preserveAspectRatio="none" aria-hidden="true">
+            <path pathLength="1" d="M0 5 Q7.5 1 15 5 T30 5 T45 5 T60 5 T75 5 T90 5 T105 5 T120 5"/>
+          </svg>
+        </span>
+      </div>
+      <div class="composer">
+        <div class="files" id="fileList" hidden></div>
+        <label class="sr" for="input" data-i18n="msgPlaceholder">Message Eddy</label>
+        <textarea id="input" rows="1" data-i18n-ph="msgPlaceholder" placeholder="Message Eddy"></textarea>
+        <div class="crow">
+          <button class="ibtn" id="attachBtn" data-i18n-aria="attach" aria-label="Attach a text file">
+            <svg class="icon" viewBox="0 0 24 24"><path d="M21 11.5l-8.8 8.8a5 5 0 0 1-7.1-7.1l8.9-8.8a3.3 3.3 0 0 1 4.7 4.7l-8.8 8.8a1.7 1.7 0 0 1-2.4-2.4l8.2-8.1"/></svg>
+          </button>
+          <input type="file" id="fileInput" accept=".txt,.md,.csv,.json,.js,.ts,.py,.html,.css,.log" multiple hidden>
+          <div class="hint" id="hint">Enter to send · Shift + Enter for a new line</div>
+          <button class="send" id="sendBtn" aria-label="Send" disabled>
+            <svg class="icon" viewBox="0 0 24 24" id="sendIcon"><path d="M12 19V5M5.5 11.5L12 5l6.5 6.5"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<dialog id="settingsDialog" data-i18n-aria="settings" aria-label="Settings">
+  <div class="set-body">
+    <div class="set-side">
+      <div class="set-search sfield">
+        <svg class="icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+        <input id="settingsSearch" type="search" name="eddy_set_srch" data-i18n-ph="settingsSearchPh" data-i18n-aria="settingsSearch" placeholder="Search settings..." aria-label="Search settings" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="search">
+      </div>
+      <p class="set-nav-hdr" data-i18n="settings">Settings</p>
+      <nav class="set-nav" id="setNav" aria-label="Settings sections">
+        <button class="set-nav-btn" data-section="general" aria-current="true">
+          <svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-1.8-.3 1.6 1.6 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1A1.6 1.6 0 0 0 9 19.4a1.6 1.6 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0 .3-1.8 1.6 1.6 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1A1.6 1.6 0 0 0 4.6 9a1.6 1.6 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 1.8.3H9a1.6 1.6 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 1 1.5 1.6 1.6 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8V9a1.6 1.6 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1z"/></svg>
+          <span data-i18n="secGeneral">General</span>
+        </button>
+        <button class="set-nav-btn" data-section="profile">
+          <svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4.5 20a7.5 7.5 0 0 1 15 0"/></svg>
+          <span data-i18n="secProfile">Profile</span>
+        </button>
+        <button class="set-nav-btn" data-section="data">
+          <svg class="icon" viewBox="0 0 24 24"><ellipse cx="12" cy="5.5" rx="7" ry="2.7"/><path d="M5 5.5v6.5c0 1.5 3.1 2.7 7 2.7s7-1.2 7-2.7V5.5"/><path d="M5 12v6.5c0 1.5 3.1 2.7 7 2.7s7-1.2 7-2.7V12"/></svg>
+          <span data-i18n="secData">Data</span>
+        </button>
+        <button class="set-nav-btn" data-section="personal">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3"/><path d="M1.5 14h5M9.5 8h5M17.5 16h5"/></svg>
+          <span data-i18n="secPersonal">Personalisation</span>
+        </button>
+      </nav>
+    </div>
+
+    <div class="set-panes">
+      <div class="set-empty" id="setEmpty" data-i18n="noSettingsResults">No settings match that.</div>
+      <!-- General -->
+      <section class="set-pane on" data-pane="general" aria-label="General">
+        <h3 class="set-hdr" data-i18n="secGeneral">General</h3>
+        <p class="sec-title" data-i18n="secDesign">Design</p>
+        <div class="field">
+          <div class="fhead">
+            <div><label data-i18n="theme">Theme</label><p class="help" data-i18n="themeHelp">Appearance follows your choice.</p></div>
+            <div class="seg icons" id="themeSeg" role="radiogroup" data-i18n-aria="theme">
+              <span class="seg-thumb" aria-hidden="true"></span>
+              <button data-theme-val="dark" role="radio" aria-checked="true" data-i18n-aria="themeDark" data-i18n-title="themeDark">
+                <svg class="icon" viewBox="0 0 24 24"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z"/></svg>
+              </button>
+              <button data-theme-val="light" role="radio" aria-checked="false" data-i18n-aria="themeLight" data-i18n-title="themeLight">
+                <svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5 5l1.6 1.6M17.4 17.4L19 19M19 5l-1.6 1.6M6.6 17.4L5 19"/></svg>
+              </button>
+              <button data-theme-val="system" role="radio" aria-checked="false" data-i18n-aria="themeSystem" data-i18n-title="themeSystem">
+                <svg class="icon" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="12" rx="2"/><path d="M9 21h6M12 17v4"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+        <p class="sec-title" data-i18n="secLanguage">Language</p>
+        <div class="field">
+          <div class="fhead">
+            <div><label data-i18n="language">Language</label><p class="help" data-i18n="languageHelp">Automatically detected until you choose.</p></div>
+            <select class="set-select" id="langSelect" data-i18n-aria="language" aria-label="Language">
+              <option value="en">English</option>
+              <option value="de">Deutsch</option>
+            </select>
+          </div>
+        </div>
+      </section>
+
+      <!-- Profile -->
+      <section class="set-pane" data-pane="profile" aria-label="Profile">
+        <h3 class="set-hdr" data-i18n="secProfile">Profile</h3>
+        <div id="profileBody"><!-- filled by renderProfile() --></div>
+      </section>
+
+      <!-- Data -->
+      <section class="set-pane" data-pane="data" aria-label="Data">
+        <h3 class="set-hdr" data-i18n="secData">Data</h3>
+        <p class="sec-title" data-i18n="secChats">Chats</p>
+        <div class="field">
+          <div class="fhead">
+            <div><label data-i18n="exportChats">Export chats</label><p class="help" data-i18n="exportHelp">Download your full chat history as a JSON file.</p></div>
+            <button class="tbtn" id="exportBtn" data-i18n="export">Export</button>
+          </div>
+        </div>
+        <div class="field">
+          <div class="fhead">
+            <div><label data-i18n="deleteChats">Delete all chats</label><p class="help" data-i18n="deleteChatsHelp">Removes every chat and message from this browser.</p></div>
+            <button class="tbtn danger-sub" id="wipeBtn" data-i18n="deleteAll">Delete all</button>
+          </div>
+        </div>
+        <p class="help" id="dataNote" data-i18n="dataNote">Nothing leaves this browser.</p>
+      </section>
+
+      <!-- Personalisation -->
+      <section class="set-pane" data-pane="personal" aria-label="Personalisation">
+        <h3 class="set-hdr" data-i18n="secPersonal">Personalisation</h3>
+        <div class="field">
+          <label for="systemPrompt" data-i18n="standingInstructions">Standing instructions</label>
+          <p class="help" data-i18n="standingHelp">Sent with every message, in every chat.</p>
+          <textarea id="systemPrompt" rows="3" placeholder="Keep answers short. Use British spelling. Explain code line by line."></textarea>
+        </div>
+        <div class="field">
+          <div class="fhead">
+            <div><label data-i18n="textSize">Text size</label><p class="help" data-i18n="textSizeHelp">Messages and composer.</p></div>
+            <div class="seg" id="sizeSeg" role="radiogroup" data-i18n-aria="textSize">
+              <span class="seg-thumb" aria-hidden="true"></span>
+              <button data-size="0.94" role="radio" aria-checked="false" data-i18n="sizeSmall">Small</button>
+              <button data-size="1" role="radio" aria-checked="true" data-i18n="sizeDefault">Default</button>
+              <button data-size="1.1" role="radio" aria-checked="false" data-i18n="sizeLarge">Large</button>
+            </div>
+          </div>
+        </div>
+        <div class="field">
+          <div class="fhead">
+            <div><label id="enterLabel" data-i18n="enterSends">Enter sends</label><p class="help" data-i18n="enterHelp">Off means Ctrl + Enter sends instead.</p></div>
+            <button class="switch" id="enterSwitch" role="switch" aria-checked="true" aria-labelledby="enterLabel"></button>
+          </div>
+        </div>
+        <div class="field">
+          <div class="fhead">
+            <div><label id="streamLabel" data-i18n="streamAnswers">Stream answers</label><p class="help" data-i18n="streamHelp">Off shows the finished answer at once.</p></div>
+            <button class="switch" id="streamSwitch" role="switch" aria-checked="true" aria-labelledby="streamLabel"></button>
+          </div>
+        </div>
+        <div class="field">
+          <div class="fhead">
+            <div><label data-i18n="languageFont">Language Font</label><p class="help" data-i18n="fontHelp">Choose the app's base font.</p></div>
+            <div class="seg" id="fontSeg" role="radiogroup" data-i18n-aria="font">
+              <span class="seg-thumb" aria-hidden="true"></span>
+              <button data-font="sans" role="radio" aria-checked="true" data-i18n="fontSans">Sans serif</button>
+              <button data-font="cascadia" role="radio" aria-checked="false" data-i18n="fontCascadia">Cascadia Code</button>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <button class="ibtn set-close" data-close data-i18n-aria="close" aria-label="Close"><svg class="icon" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  </div>
+</dialog>
+
+<dialog id="searchDialog" aria-labelledby="searchTitle">
+  <div class="dhead">
+    <h2 id="searchTitle" data-i18n="searchTitle">Search chats</h2>
+    <button class="ibtn" data-close data-i18n-aria="close" aria-label="Close"><svg class="icon" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  </div>
+  <div class="dbody">
+    <div class="sfield">
+      <svg class="icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+      <input id="searchDialogInput" type="search" name="eddy_srch" data-i18n-ph="searchPh" data-i18n-aria="search" placeholder="Search chats..." aria-label="Search chats" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="search">
+    </div>
+    <div id="searchResults"></div>
+  </div>
+</dialog>
+
+<dialog id="shortcutsDialog" aria-labelledby="scTitle">
+  <div class="dhead">
+    <h2 id="scTitle" data-i18n="shortcuts">Shortcuts</h2>
+    <button class="ibtn" data-close data-i18n-aria="close" aria-label="Close"><svg class="icon" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  </div>
+  <div class="dbody">
+    <div class="keys">
+      <span data-i18n="scNewChat">New chat</span><div><kbd>Ctrl</kbd> <kbd>Shift</kbd> <kbd>O</kbd></div>
+      <span data-i18n="scSearch">Search chats</span><div><kbd>Ctrl</kbd> <kbd>K</kbd></div>
+      <span data-i18n="scFocus">Focus the composer</span><div><kbd>Ctrl</kbd> <kbd>/</kbd></div>
+      <span data-i18n="scNewLine">New line</span><div><kbd>Shift</kbd> <kbd>Enter</kbd></div>
+      <span data-i18n="scStop">Stop the answer</span><div><kbd>Esc</kbd></div>
+      <span data-i18n="scSidebar">Show or hide sidebar</span><div><kbd>Ctrl</kbd> <kbd>B</kbd></div>
+    </div>
+  </div>
+</dialog>
+
+<dialog id="confirmDialog" aria-labelledby="confirmTitleLabel">
+  <div class="confirm-body">
+    <h2 class="confirm-title" id="confirmTitleLabel"></h2>
+    <p id="confirmText"></p>
+    <span class="confirm-warn" id="confirmWarn"></span>
+    <div class="fld-wrap" id="confirmPassWrap" style="display:none;margin-bottom:14px">
+      <label for="confirmPass" data-i18n="authPass">Password</label>
+      <input class="fld" id="confirmPass" type="password" autocomplete="off">
+    </div>
+    <div class="confirm-actions">
+      <button class="tbtn" id="confirmCancel" data-i18n="cancel">Cancel</button>
+      <button class="tbtn danger" id="confirmOk" data-i18n="delete">Delete</button>
+    </div>
+  </div>
+</dialog>
+
+<div class="toasts" id="toasts" aria-live="polite"></div>
+
+<script>
+(() => {
+"use strict";
+
+const KEY = "eddy.chat.v1";
+const MODES = [
+  {id:"quick",   name:"Fast",     note:"Short answers, quickest replies."},
+  {id:"default", name:"Balanced", note:"The everyday choice."},
+  {id:"complex", name:"Deep",     note:"Slower, for reasoning and long tasks."}
+];
+
+const I18N = {
+  en: {
+    close:"Close", settings:"Settings", newChat:"New chat", savedLocal:"Saved in this browser",
+    settingsSearch:"Search settings", settingsSearchPh:"Search settings…", noSettingsResults:"No settings match that.",
+    search:"Search chats", searchTitle:"Search chats", searchPh:"Search chats…",
+    shortcuts:"Shortcuts", toggleSidebar:"Show or hide sidebar", switchTheme:"Switch theme",
+    attach:"Attach a text file", msgPlaceholder:"Message Eddy",
+    secGeneral:"General", secProfile:"Profile", secData:"Data", secPersonal:"Personalisation",
+    secDesign:"Design", theme:"Theme", themeHelp:"Appearance follows your choice.",
+    themeDark:"Dark", themeLight:"Light", themeSystem:"System",
+    secLanguage:"Language", language:"Language", languageHelp:"Automatically detected until you choose.",
+    secChats:"Chats", secAccount:"Account", dangerZone:"Danger Zone",
+    langEn:"English", langDe:"Deutsch",
+    exportChats:"Export chats", exportHelp:"Download your full chat history as a JSON file.",
+    export:"Export", deleteChats:"Delete all chats", deleteChatsHelp:"Removes every chat and message from this browser.",
+    deleteAll:"Delete all", dataNote:"Nothing leaves this browser.",
+    standingInstructions:"Standing instructions", standingHelp:"Sent with every message, in every chat.",
+    textSize:"Text size", textSizeHelp:"Messages and composer.",
+    sizeSmall:"Small", sizeDefault:"Default", sizeLarge:"Large",
+    enterSends:"Enter sends", enterHelp:"Off means Ctrl + Enter sends instead.",
+    streamAnswers:"Stream answers", streamHelp:"Off shows the finished answer at once.",
+    languageFont:"Language Font", fontHelp:"Choose the app's base font.",
+    fontSans:"Sans serif", fontCascadia:"Cascadia Code",
+    account:"Account", login:"Log in", register:"Create account",
+    authEmail:"Email", authEmailPh:"you@example.com", authName:"Name", authPass:"Password", authConfirm:"Confirm password",
+    switchToRegister:"No account? Create one.", switchToLogin:"Already have an account? Log in.",
+    cancel:"Cancel", delete:"Delete",
+    modeQuickName:"Fast", modeDefaultName:"Balanced", modeComplexName:"Deep",
+    modeQuickNote:"Short answers, quickest replies.", modeDefaultNote:"The everyday choice.", modeComplexNote:"Slower, for reasoning and long tasks.",
+    bToday:"Today", bYesterday:"Yesterday", bWeek:"Previous 7 days", bMonth:"Previous 30 days", bOlder:"Older",
+    noChats:"No chats yet.", noMatches:"No chat matches that.", latest:"Latest chats", results:"Results",
+    you:"You", copy:"Copy", copied:"Copied",
+    editResend:"Edit and resend", regenerate:"Regenerate",
+    goodAnswer:"Good answer", needsWork:"Needs work", del:"Delete",
+    renameChat:"Rename chat", deleteChat:"Delete chat", chatName:"Chat name",
+    saveResend:"Save and resend",
+    hintSend:"Enter to send · Shift + Enter for a new line",
+    hintCtr:"Ctrl + Enter to send",
+    hintStop:"Answering… press Esc to stop",
+    send:"Send", stop:"Stop", answering:"Answering",
+    errOfflineModel:"Eddy cannot reach the local model. Make sure Ollama is running and try again.",
+    errRate:"Too many requests at once. Wait a few seconds and try again.",
+    errBusy:"The model is busy. Try again shortly.",
+    errGeneric:"That request did not go through. Check your connection and try again.",
+    errInvalidEmail:"Enter a valid email address.",
+    errWeakPassword:"Password must be at least 6 characters long.",
+    errEmailTaken:"That email is already in use.",
+    errBadCredentials:"Wrong email or password.",
+    errPassMismatch:"The passwords do not match.",
+    errInvalidName:"Name must be between 1 and 60 characters.",
+    errUnauthorized:"You are not signed in. Log in again.",
+    profilePicture:"Profile picture", changePicture:"Change profile picture", removePicture:"Remove picture",
+    pictureSaved:"Profile picture updated.", pictureRemoved:"Profile picture removed.",
+    errPicType:"Please choose a PNG, JPEG or WebP image.", errPicSize:"The image is too large (max 2 MB).",
+    errFileTooLarge:"{name} is over 400 KB", errFileRead:"Could not read {name}", errFileType:"{name} is not a text file",
+    thinking:"Thinking", stopped:"stopped", jumpLatest:"Jump to latest", saveFailed:"This browser will not let Eddy save chats.",
+    exported:"Exported", chatsDeleted:"All chats deleted", chatDeleted:"Chat deleted",
+    welcome:"Signed in.", signedOut:"Signed out.", accountDeleted:"Account deleted.", nameSaved:"Name saved.",
+    profileSignedOutHelp:"Create an account or log in to manage your profile.",
+    profileName:"Name", profileNameHelp:"Shown in greetings and saved to your account.",
+    namePlaceholder:"e.g. Sam",
+    signedInAs:"Signed in on this device.",
+    logoutAll:"Logout on all devices", logoutAllHelp:"Ends every active session.",
+    deleteAccount:"Delete Account", deleteAccountHelp:"Permanently removes your account.",
+    deleteAccountTitle:"Delete account?", deleteAccountText:"Your account will be permanently deleted. This cannot be undone.",
+    confirmPassPh:"Enter your password to confirm",
+    wipeTitle:"Delete all chats?", wipeText:"This removes every chat and message from this browser. This cannot be easily undone.",
+    cannotUndo:"This cannot be easily undone.", cannotUndoAccount:"This cannot be undone.",
+    removeFile:"Remove {name}",
+    scNewChat:"New chat", scSearch:"Search chats", scFocus:"Focus the composer",
+    scNewLine:"New line", scStop:"Stop the answer", scSidebar:"Show or hide sidebar"
+  },
+  de: {
+    close:"Schließen", settings:"Einstellungen", newChat:"Neuer Chat", savedLocal:"In diesem Browser gespeichert",
+    settingsSearch:"Einstellungen durchsuchen", settingsSearchPh:"Einstellungen durchsuchen…", noSettingsResults:"Keine Einstellung passt dazu.",
+    search:"Chats durchsuchen", searchTitle:"Chats durchsuchen", searchPh:"Chats durchsuchen…",
+    shortcuts:"Tastenkürzel", toggleSidebar:"Seitenleiste ein-/ausblenden", switchTheme:"Design wechseln",
+    attach:"Textdatei anhängen", msgPlaceholder:"Eddy eine Nachricht schreiben",
+    secGeneral:"Allgemein", secProfile:"Profil", secData:"Daten", secPersonal:"Personalisierung",
+    secDesign:"Design", theme:"Design", themeHelp:"Darstellung folgt deiner Auswahl.",
+    themeDark:"Dunkel", themeLight:"Hell", themeSystem:"System",
+    secLanguage:"Sprache", language:"Sprache", languageHelp:"Wird automatisch erkannt, bis du wählst.",
+    secChats:"Chats", secAccount:"Konto", dangerZone:"Gefahrenbereich",
+    langEn:"English", langDe:"Deutsch",
+    exportChats:"Chats exportieren", exportHelp:"Lade deinen gesamten Chatverlauf als JSON-Datei herunter.",
+    export:"Exportieren", deleteChats:"Alle Chats löschen", deleteChatsHelp:"Entfernt alle Chats und Nachrichten aus diesem Browser.",
+    deleteAll:"Alles löschen", dataNote:"Nichts verlässt diesen Browser.",
+    standingInstructions:"Dauerhafte Anweisungen", standingHelp:"Wird mit jeder Nachricht in jedem Chat gesendet.",
+    textSize:"Textgröße", textSizeHelp:"Nachrichten und Eingabefeld.",
+    sizeSmall:"Klein", sizeDefault:"Standard", sizeLarge:"Groß",
+    enterSends:"Enter sendet", enterHelp:"Aus: stattdessen sendet Strg + Enter.",
+    streamAnswers:"Antworten streamen", streamHelp:"Aus: fertige Antwort erscheint auf einmal.",
+    languageFont:"Schriftart", fontHelp:"Wähle die Basis-Schrift der App.",
+    fontSans:"Sans-Serif", fontCascadia:"Cascadia Code",
+    account:"Konto", login:"Anmelden", register:"Konto erstellen",
+    authEmail:"E-Mail", authEmailPh:"du@beispiel.de", authName:"Name", authPass:"Passwort", authConfirm:"Passwort bestätigen",
+    switchToRegister:"Kein Konto? Eines erstellen.", switchToLogin:"Schon ein Konto? Anmelden.",
+    cancel:"Abbrechen", delete:"Löschen",
+    modeQuickName:"Schnell", modeDefaultName:"Ausgewogen", modeComplexName:"Tiefgründig",
+    modeQuickNote:"Kurze Antworten, schnellste Reaktionen.", modeDefaultNote:"Die Alltagswahl.", modeComplexNote:"Langsamer, für Überlegungen und lange Aufgaben.",
+    bToday:"Heute", bYesterday:"Gestern", bWeek:"Letzte 7 Tage", bMonth:"Letzte 30 Tage", bOlder:"Älter",
+    noChats:"Noch keine Chats.", noMatches:"Keine Übereinstimmung.", latest:"Letzte Chats", results:"Ergebnisse",
+    you:"Du", copy:"Kopieren", copied:"Kopiert",
+    editResend:"Bearbeiten und erneut senden", regenerate:"Neu generieren",
+    goodAnswer:"Gute Antwort", needsWork:"Braucht Feinarbeit", del:"Löschen",
+    renameChat:"Chat umbenennen", deleteChat:"Chat löschen", chatName:"Chat-Name",
+    saveResend:"Speichern und senden",
+    hintSend:"Enter zum Senden · Shift + Enter für eine neue Zeile",
+    hintCtr:"Strg + Enter zum Senden",
+    hintStop:"Antwort… Esc zum Stoppen",
+    send:"Senden", stop:"Stoppen", answering:"Antwortet",
+    errOfflineModel:"Eddy kann das lokale Modell nicht erreichen. Stelle sicher, dass Ollama läuft, und versuche es erneut.",
+    errRate:"Zu viele Anfragen gleichzeitig. Warte kurz und versuche es erneut.",
+    errBusy:"Das Modell ist beschäftigt. Versuche es gleich noch einmal.",
+    errGeneric:"Die Anfrage ist fehlgeschlagen. Prüfe deine Verbindung und versuche es erneut.",
+    errInvalidEmail:"Gib eine gültige E-Mail-Adresse ein.",
+    errWeakPassword:"Das Passwort muss mindestens 6 Zeichen lang sein.",
+    errEmailTaken:"Diese E-Mail-Adresse ist bereits vergeben.",
+    errBadCredentials:"Falsche E-Mail-Adresse oder falsches Passwort.",
+    errPassMismatch:"Die Passwörter stimmen nicht überein.",
+    errInvalidName:"Der Name muss 1 bis 60 Zeichen lang sein.",
+    errUnauthorized:"Du bist nicht angemeldet. Melde dich erneut an.",
+    profilePicture:"Profilbild", changePicture:"Profilbild ändern", removePicture:"Bild entfernen",
+    pictureSaved:"Profilbild aktualisiert.", pictureRemoved:"Profilbild entfernt.",
+    errPicType:"Bitte wähle ein PNG-, JPEG- oder WebP-Bild.", errPicSize:"Das Bild ist zu groß (max. 2 MB).",
+    errFileTooLarge:"{name} ist größer als 400 KB", errFileRead:"{name} konnte nicht gelesen werden", errFileType:"{name} ist keine Textdatei",
+    thinking:"Denkt nach", stopped:"gestoppt", jumpLatest:"Zum neuesten Beitrag", saveFailed:"Dieser Browser verhindert das Speichern der Chats.",
+    exported:"Exportiert", chatsDeleted:"Alle Chats gelöscht", chatDeleted:"Chat gelöscht",
+    welcome:"Angemeldet.", signedOut:"Abgemeldet.", accountDeleted:"Konto gelöscht.", nameSaved:"Name gespeichert.",
+    profileSignedOutHelp:"Erstelle ein Konto oder melde dich an, um dein Profil zu verwalten.",
+    profileName:"Name", profileNameHelp:"Erscheint in Begrüßungen und wird in deinem Konto gespeichert.",
+    namePlaceholder:"z. B. Sam",
+    signedInAs:"Auf diesem Gerät angemeldet.",
+    logoutAll:"Auf allen Geräten abmelden", logoutAllHelp:"Beendet alle aktiven Sitzungen.",
+    deleteAccount:"Konto löschen", deleteAccountHelp:"Entfernt dein Konto dauerhaft.",
+    deleteAccountTitle:"Konto löschen?", deleteAccountText:"Dein Konto wird dauerhaft gelöscht. Das kann nicht rückgängig gemacht werden.",
+    confirmPassPh:"Passwort zur Bestätigung eingeben",
+    wipeTitle:"Alle Chats löschen?", wipeText:"Das entfernt alle Chats und Nachrichten aus diesem Browser. Das kann nicht ohne Weiteres rückgängig gemacht werden.",
+    cannotUndo:"Das kann nicht ohne Weiteres rückgängig gemacht werden.", cannotUndoAccount:"Das kann nicht rückgängig gemacht werden.",
+    removeFile:"Entfernen: {name}",
+    scNewChat:"Neuer Chat", scSearch:"Chats durchsuchen", scFocus:"Fokus ins Eingabefeld",
+    scNewLine:"Neue Zeile", scStop:"Antwort stoppen", scSidebar:"Seitenleiste ein-/ausblenden"
+  }
+};
+
+const SESSION_KEY = "eddy.session.v1";
+const auth = { token: localStorage.getItem(SESSION_KEY) || "", user: null };
+let nameSyncT = 0;
+
+const state = {
+  chats: [], activeId: null, query: "", files: [], busy: false, controller: null,
+  settings: { theme:"dark", mode:"default", systemPrompt:"", name:"", enterSends:true, stream:true, fontScale:1, lang:"", fontFamily:"sans" }
+};
+
+const $  = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const uid = () => Math.random().toString(36).slice(2,10) + Date.now().toString(36);
+const chat = () => state.chats.find(c => c.id === state.activeId) || null;
+
+function load(){
+  try {
+    const d = JSON.parse(localStorage.getItem(KEY) || "null");
+    if (!d) return;
+    if (Array.isArray(d.chats)) state.chats = d.chats;
+    if (d.settings) Object.assign(state.settings, d.settings);
+    state.activeId = d.activeId || null;
+  } catch (e) {}
+}
+let saveT;
+function save(){
+  clearTimeout(saveT);
+  saveT = setTimeout(() => {
+    try { localStorage.setItem(KEY, JSON.stringify({chats:state.chats, activeId:state.activeId, settings:state.settings})); }
+    catch (e) { $("#dataNote").textContent = t("saveFailed"); }
+  }, 200);
+}
+
+/* ---------- language -------------------------------------------- */
+function detectLang(){
+  const code = (navigator.language || "").split("-")[0].toLowerCase();
+  return code === "de" ? "de" : "en";
+}
+function effectiveLang(){ return state.settings.lang === "de" || state.settings.lang === "en" ? state.settings.lang : detectLang(); }
+function t(key){ return (I18N[effectiveLang()] && I18N[effectiveLang()][key]) || I18N.en[key] || key; }
+function tr(key, vars){
+  let s = t(key);
+  if (vars) for (const k in vars) s = s.split("{" + k + "}").join(vars[k]);
+  return s;
+}
+function applyLang(){
+  const l = effectiveLang();
+  document.documentElement.lang = l;
+  $$("[data-i18n]").forEach(el => el.textContent = t(el.dataset.i18n));
+  $$("[data-i18n-ph]").forEach(el => el.placeholder = t(el.dataset.i18nPh));
+  $$("[data-i18n-aria]").forEach(el => el.setAttribute("aria-label", t(el.dataset.i18nAria)));
+  $$("[data-i18n-title]").forEach(el => el.title = t(el.dataset.i18nTitle));
+  const ls = $("#langSelect");
+  if (ls) ls.value = l;
+  buildModeMenu();
+  renderList();
+  renderThread();
+  setBusy(state.busy);
+  renderUserChip();
+}
+
+/* ---------- theme ----------------------------------------------- */
+const systemDark = () => matchMedia("(prefers-color-scheme: dark)").matches;
+function activeTheme(){
+  return state.settings.theme === "system" ? (systemDark() ? "dark" : "light") : state.settings.theme;
+}
+function applyTheme(){
+  const eff = activeTheme();
+  document.documentElement.dataset.theme = eff;
+  $("#themeIcon").innerHTML = eff === "dark"
+    ? '<path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z"/>'
+    : '<circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5 5l1.6 1.6M17.4 17.4L19 19M19 5l-1.6 1.6M6.6 17.4L5 19"/>';
+  $$("#themeSeg button").forEach(b => b.setAttribute("aria-checked", String(b.dataset.themeVal === state.settings.theme)));
+}
+
+/* ---------- account / auth -------------------------------------- */
+async function apiAuth(path, { method = "POST", body } = {}){
+  const res = await fetch(path, {
+    method,
+    headers: {
+      "Content-Type": "application/json",
+      ...(auth.token ? { Authorization: "Bearer " + auth.token } : {})
+    },
+    body: body ? JSON.stringify(body) : undefined
+  }).catch(() => null);
+  if (!res) return { ok: false, status: 0, data: { error: { code: "offline" } } };
+  let data = null;
+  try { data = await res.json(); } catch (e) {}
+  return { ok: res.ok, status: res.status, data: data || {} };
+}
+async function apiAuthFile(path, file){
+  const res = await fetch(path, {
+    method: "POST",
+    headers: { ...(auth.token ? { Authorization: "Bearer " + auth.token } : {}) },
+    body: file
+  }).catch(() => null);
+  if (!res) return { ok: false, status: 0, data: { error: { code: "offline" } } };
+  let data = null;
+  try { data = await res.json(); } catch (e) {}
+  return { ok: res.ok, status: res.status, data: data || {} };
+}
+function authErrorLabel(data){
+  const code = data && data.error && data.error.code;
+  const map = {
+    invalid_email: t("errInvalidEmail"),
+    weak_password: t("errWeakPassword"),
+    identifier_taken: t("errEmailTaken"),
+    invalid_credentials: t("errBadCredentials"),
+    invalid_name: t("errInvalidName"),
+    unauthorized: t("errUnauthorized"),
+    unsupported_media: t("errPicType"),
+    payload_too_large: t("errPicSize"),
+    offline: t("errOfflineModel")
+  };
+  if (code && map[code]) return map[code];
+  return (data && data.error && data.error.message) || t("errGeneric");
+}
+function tokenGet(){ return auth.token; }
+function setSession(token, user){
+  auth.token = token || "";
+  auth.user = user || null;
+  try {
+    if (auth.token) localStorage.setItem(SESSION_KEY, auth.token);
+    else localStorage.removeItem(SESSION_KEY);
+  } catch (e) {}
+  renderProfile();
+  renderUserChip();
+}
+const signedIn = () => !!(auth.token && auth.user);
+const PICTURE_MAX = 2 * 1000 * 1000;
+function picURL(){
+  return "/api/auth/profile-picture?token=" + encodeURIComponent(auth.token) +
+    "&v=" + ((auth.user && auth.user.profilePictureVer) || 0);
+}
+function avatarMarkup(mod){
+  const cls = "avatar" + (mod ? " " + mod : "");
+  if (signedIn() && auth.user){
+    if (auth.user.profilePicture){
+      return '<span class="' + cls + '" style="background:var(--bg)"><img src="' + esc(picURL()) + '" alt=""></span>';
+    }
+    const n = (auth.user.name || "").trim() || "?";
+    const letter = n.charAt(0).toUpperCase();
+    return '<span class="' + cls + '" style="background:' + esc(auth.user.avatarColor || "#5E4BC9") + '">' + esc(letter) + '</span>';
+  }
+  return "";
+}
+function updatePicRow(previewOverride){
+  const box = $("#profilePicPreview");
+  if (!box) return;
+  if (previewOverride){
+    box.innerHTML = '<span class="avatar xl" style="background:var(--bg)"><img src="' + previewOverride + '" alt=""></span>';
+  } else {
+    box.innerHTML = avatarMarkup("xl");
+  }
+  const hasPic = !!(auth.user && auth.user.profilePicture && !previewOverride);
+  const rm = $("#removePicBtn");
+  if (rm) rm.style.display = hasPic ? "" : "none";
+}
+async function uploadPic(file){
+  if (!signedIn() || !file) return;
+  if (!/^image\/(png|jpeg|webp)$/.test(file.type || "")){ toast(t("errPicType"), "error"); return; }
+  if (file.size > PICTURE_MAX){ toast(t("errPicSize"), "error"); return; }
+  const preview = URL.createObjectURL(file);
+  updatePicRow(preview);
+  const { ok, data } = await apiAuthFile("/api/auth/profile-picture", file);
+  URL.revokeObjectURL(preview);
+  if (!ok){
+    updatePicRow();
+    toast(authErrorLabel(data), "error");
+    return;
+  }
+  auth.user.profilePicture = (data.user && data.user.profilePicture) || "";
+  auth.user.profilePictureVer = (data.user && data.user.profilePictureVer) || 0;
+  renderProfile();
+  renderUserChip();
+  toast(t("pictureSaved"));
+}
+async function removePic(){
+  if (!signedIn()) return;
+  const { ok, data } = await apiAuth("/api/auth/profile-picture", { method: "DELETE" });
+  if (!ok){ toast(authErrorLabel(data), "error"); return; }
+  auth.user.profilePicture = (data.user && data.user.profilePicture) || "";
+  auth.user.profilePictureVer = (data.user && data.user.profilePictureVer) || 0;
+  renderProfile();
+  renderUserChip();
+  toast(t("pictureRemoved"));
+}
+function renderUserChip(){
+  const el = $("#footName");
+  if (!el) return;
+  if (signedIn() && auth.user){
+    const n = (auth.user.name || "").trim();
+    el.classList.add("on");
+    el.innerHTML = avatarMarkup("") +
+      '<span class="fc-name">' + esc(n) + '</span>';
+  } else {
+    el.classList.remove("on");
+    el.innerHTML = "";
+    el.textContent = t("savedLocal");
+  }
+}
+
+/* ---------- top-level auth gate ---------------------------------- */
+function showApp(){
+  $("#authScreen").classList.add("hide");
+  $("#app").classList.remove("hide");
+  setTimeout(() => {
+    placeSegThumbs(false);
+    $("#input").focus();
+  }, 60);
+}
+function showAuth(){
+  setAuthMode("login");
+  $("#authForm").reset();
+  $("#authErr").textContent = "";
+  $("#authScreen").classList.remove("hide");
+  $("#app").classList.add("hide");
+  setTimeout(() => $("#authEmail").focus(), 60);
+}
+async function authInit(){
+  if (auth.token){
+    const { ok, data } = await apiAuth("/api/auth/me", { method: "GET" });
+    if (ok && data.user){
+      auth.user = data.user;
+      renderProfile();
+      renderUserChip();
+      showApp();
+      return;
+    }
+    setSession("", null);
+  }
+  renderProfile();
+  showAuth();
+}
+
+/* ---------- login / registration screen --------------------------- */
+const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
+let authMode = "login";
+function setAuthMode(mode){
+  authMode = mode === "register" ? "register" : "login";
+  const isLogin = authMode === "login";
+  $("#authTabLogin").setAttribute("aria-selected", String(isLogin));
+  $("#authTabRegister").setAttribute("aria-selected", String(!isLogin));
+  $("#authNameWrap").style.display = isLogin ? "none" : "";
+  $("#authPass2Wrap").style.display = isLogin ? "none" : "";
+  $("#authSubmit").textContent = t(isLogin ? "login" : "register");
+  $("#authSwitchBtn").textContent = t(isLogin ? "switchToRegister" : "switchToLogin");
+  $("#authHead").textContent = t(isLogin ? "login" : "register");
+  $("#authPass").setAttribute("autocomplete", isLogin ? "current-password" : "new-password");
+  $("#authPass2").setAttribute("autocomplete", "new-password");
+  $("#authName").required = !isLogin;
+  $("#authPass2").required = !isLogin;
+  $("#authErr").textContent = "";
+}
+async function submitAuth(){
+  const email = $("#authEmail").value.trim();
+  const password = $("#authPass").value;
+  const isLogin = authMode === "login";
+  $("#authErr").textContent = "";
+  if (!EMAIL_RE.test(email)){ $("#authErr").textContent = t("errInvalidEmail"); return; }
+  if (password.length < 6){ $("#authErr").textContent = t("errWeakPassword"); return; }
+  if (!isLogin){
+    const name = $("#authName").value.trim();
+    if (!name || name.length > 60){ $("#authErr").textContent = t("errInvalidName"); return; }
+    if (password !== $("#authPass2").value){ $("#authErr").textContent = t("errPassMismatch"); return; }
+  }
+  $("#authSubmit").disabled = true;
+  try {
+    const body = { ident: email, password };
+    if (!isLogin) body.name = $("#authName").value.trim();
+    const { ok, data } = await apiAuth(isLogin ? "/api/auth/login" : "/api/auth/register", { body });
+    if (!ok){ $("#authErr").textContent = authErrorLabel(data); return; }
+    setSession(data.token, data.user);
+    state.settings.name = (data.user && data.user.name) || state.settings.name;
+    save();
+    toast(t("welcome"));
+    showApp();
+  } finally {
+    $("#authSubmit").disabled = false;
+  }
+}
+async function updateName(n){
+  if (!signedIn()) return;
+  const { ok, data } = await apiAuth("/api/auth/me", { body: { name: n } });
+  if (!ok){ toast(authErrorLabel(data), "error"); return; }
+  auth.user = data.user;
+  renderProfile();
+  renderUserChip();
+  toast(t("nameSaved"));
+}
+function renderProfile(){
+  const box = $("#profileBody");
+  if (!box) return;
+  if (!signedIn()){
+    box.innerHTML = '<div class="auth-note"><p data-i18n="profileSignedOutHelp">Sign in to manage your profile.</p></div>';
+    applyLang();
+    return;
+  }
+  box.innerHTML =
+    '<div class="field"><label data-i18n="profilePicture">Profile picture</label>' +
+    '<div class="pic-row"><span id="profilePicPreview"></span>' +
+    '<div class="pic-actions">' +
+    '<button class="tbtn" id="changePicBtn" data-i18n="changePicture">Change profile picture</button>' +
+    '<button class="tbtn danger-sub" id="removePicBtn" style="display:none" data-i18n="removePicture">Remove picture</button>' +
+    '</div></div>' +
+    '<input type="file" id="picFile" accept="image/png,image/jpeg,image/webp" hidden></div>' +
+    '<div class="field"><label for="userName" data-i18n="profileName">Name</label>' +
+    '<p class="help" data-i18n="profileNameHelp">Shown in greetings and saved to your account.</p>' +
+    '<input id="userName" type="text" data-i18n-ph="namePlaceholder" autocomplete="off" value="' + esc(auth.user.name || "") + '"></div>' +
+    '<div class="field"><label for="userEmail" data-i18n="authEmail">Email</label>' +
+    '<input id="userEmail" type="text" value="' + esc(auth.user.ident || "") + '" readonly></div>' +
+    '<div class="field"><div class="fhead"><div><label data-i18n="logoutAll">Logout on all devices</label>' +
+    '<p class="help" data-i18n="logoutAllHelp">Ends every active session.</p></div>' +
+    '<button class="tbtn" id="logoutAllBtn" data-i18n="logoutAll">Logout on all devices</button></div></div>' +
+    '<p class="sec-title" data-i18n="dangerZone">Danger Zone</p>' +
+    '<div class="field"><div class="fhead"><div><label data-i18n="deleteAccount">Delete Account</label>' +
+    '<p class="help" data-i18n="deleteAccountHelp">Permanently removes your account.</p></div>' +
+    '<button class="tbtn danger-sub" id="deleteAccountBtn" data-i18n="deleteAccount">Delete Account</button></div></div>';
+  applyLang();
+  updatePicRow();
+  box.querySelector("#changePicBtn").addEventListener("click", () => {
+    const f = box.querySelector("#picFile");
+    if (f){ f.value = ""; f.click(); }
+  });
+  box.querySelector("#picFile").addEventListener("change", e => {
+    const file = e.target.files && e.target.files[0];
+    if (file) uploadPic(file);
+  });
+  box.querySelector("#removePicBtn").addEventListener("click", removePic);
+  box.querySelector("#userName").addEventListener("input", e => {
+    state.settings.name = e.target.value.trim();
+    save();
+    clearTimeout(nameSyncT);
+    nameSyncT = setTimeout(() => {
+      const n = $("#userName") ? $("#userName").value.trim() : "";
+      if (n && n !== auth.user.name) updateName(n);
+    }, 650);
+  });
+  box.querySelector("#logoutAllBtn").addEventListener("click", async () => {
+    await apiAuth("/api/auth/logout_all");
+    setSession("", null);
+    showAuth();
+    toast(t("signedOut"));
+  });
+  box.querySelector("#deleteAccountBtn").addEventListener("click", () => {
+    confirmDialogBox({
+      title: t("deleteAccountTitle"),
+      text: t("deleteAccountText"),
+      warn: t("cannotUndoAccount"),
+      okLabel: t("deleteAccount"),
+      password: true,
+      onOk: async (pass) => {
+        const { ok, data } = await apiAuth("/api/auth/account", { method: "DELETE", body: { password: pass } });
+        if (!ok){ toast(authErrorLabel(data), "error"); return; }
+        state.chats = []; state.activeId = null;
+        try {
+          localStorage.removeItem(SESSION_KEY);
+          localStorage.removeItem(KEY);
+        } catch (e) {}
+        renderList(); renderThread();
+        setSession("", null);
+        showAuth();
+        toast(t("accountDeleted"));
+      }
+    });
+  });
+}
+
+/* ---------- confirmation dialog ---------------------------------- */
+let confirmCb = null;
+let confirmPassword = false;
+function confirmDialogBox(opts){
+  confirmPassword = !!opts.password;
+  confirmCb = opts.onOk || null;
+  $("#confirmTitleLabel").textContent = opts.title || "";
+  $("#confirmText").textContent = opts.text || "";
+  $("#confirmWarn").textContent = opts.warn || "";
+  $("#confirmWarn").style.display = opts.warn ? "" : "none";
+  $("#confirmOk").textContent = opts.okLabel || t("delete");
+  $("#confirmPassWrap").style.display = confirmPassword ? "" : "none";
+  $("#confirmPass").value = "";
+  $("#confirmDialog").showModal();
+  if (confirmPassword) setTimeout(() => $("#confirmPass").focus(), 130);
+}
+
+/* ---------- settings window -------------------------------------- */
+function applySettings(){
+  applyTheme();
+  document.documentElement.style.setProperty("--fs", state.settings.fontScale);
+  document.documentElement.style.setProperty("--font",
+    state.settings.fontFamily === "cascadia"
+      ? '"Cascadia Code",Consolas,"JetBrains Mono",ui-monospace,monospace'
+      : '"Inter","Segoe UI",system-ui,-apple-system,sans-serif');
+  $$("#sizeSeg button").forEach(b => b.setAttribute("aria-checked", String(+b.dataset.size === state.settings.fontScale)));
+  $$("#fontSeg button").forEach(b => b.setAttribute("aria-checked", String(b.dataset.font === state.settings.fontFamily)));
+  $("#systemPrompt").value = state.settings.systemPrompt;
+  $("#enterSwitch").setAttribute("aria-checked", String(state.settings.enterSends));
+  $("#streamSwitch").setAttribute("aria-checked", String(state.settings.stream));
+  applyLang();
+  placeSegThumbs();
+}
+
+function placeSegThumb(seg, animate = true){
+  const thumb = seg.querySelector(".seg-thumb");
+  const sel = seg.querySelector('button[aria-checked="true"]') || seg.querySelector('button[aria-pressed="true"]');
+  if (!thumb || !sel || !seg.offsetParent) return;
+  if (!animate) thumb.style.transition = "none";
+  const b = sel.getBoundingClientRect();
+  const s = seg.getBoundingClientRect();
+  const cs = getComputedStyle(seg);
+  thumb.style.width = b.width + "px";
+  thumb.style.transform = "translateX(" + (b.left - s.left - parseFloat(cs.borderLeftWidth)) + "px)";
+  const all = seg.querySelectorAll("button");
+  const n = all.length;
+  if (n < 2) thumb.style.borderRadius = "6px";
+  else if (all[0] === sel) thumb.style.borderRadius = "6px 0 0 6px";
+  else if (all[n - 1] === sel) thumb.style.borderRadius = "0 6px 6px 0";
+  else thumb.style.borderRadius = "0";
+  if (!animate){ void thumb.offsetHeight; thumb.style.transition = ""; }
+}
+function placeSegThumbs(animate = true){
+  $$(".seg").forEach(seg => placeSegThumb(seg, animate));
+}
+
+/* ---------- brand ------------------------------------------------ */
+function buildModeMenu(){
+  const menu = $("#modeMenu");
+  if (!menu) return;
+  menu.innerHTML = "";
+  MODES.forEach(m => {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "mi";
+    b.role = "menuitemradio";
+    b.dataset.id = m.id;
+    b.innerHTML = '<svg class="icon" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>' +
+      "<span><strong>" + esc(t("mode" + m.id.charAt(0).toUpperCase() + m.id.slice(1) + "Name")) + "</strong>" +
+      "<em>" + esc(t("mode" + m.id.charAt(0).toUpperCase() + m.id.slice(1) + "Note")) + "</em></span>";
+    b.addEventListener("click", () => {
+      state.settings.mode = m.id;
+      save();
+      applySettings();
+      closeMenu();
+    });
+    menu.appendChild(b);
+  });
+}
+
+/* ---------- model ------------------------------------------------
+   askModel is the only place the UI touches a model. It talks to the
+   local backend at /api/chat, which forwards to Ollama on this PC.
+   ---------------------------------------------------------------- */
+const CHAT_ENDPOINT = "/api/chat";
+
+async function askModel(turns, { onText, signal, tier }){
+  const res = await fetch(CHAT_ENDPOINT, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ messages: turns, mode: tier, stream: state.settings.stream }),
+    signal
+  }).catch(err => {
+    if (signal?.aborted || err?.name === "AbortError") throw { code: "cancelled", text: "" };
+    throw { code: "offline", text: "" };
+  });
+
+  if (!res.ok) throw await readError(res);
+
+  if (state.settings.stream && res.body) return readStream(res.body.getReader(), onText, signal);
+
+  const data = await res.json();
+  const text = (data && data.message) || "";
+  onText?.(text);
+  return text;
+}
+
+async function readError(res){
+  let code = "offline", message = "";
+  try {
+    const body = await res.json();
+    if (body && body.error){
+      code = body.error.code || code;
+      message = body.error.message || "";
+    }
+  } catch (err) {}
+  return { code, text: "", message };
+}
+
+async function readStream(reader, onText, signal){
+  const decoder = new TextDecoder();
+  let buf = "", text = "";
+  try {
+    while (true){
+      const { done, value } = await reader.read();
+      if (done) break;
+      buf += decoder.decode(value, { stream: true });
+      let nl;
+      while ((nl = buf.indexOf("\n")) >= 0){
+        const line = buf.slice(0, nl).trim();
+        buf = buf.slice(nl + 1);
+        if (!line) continue;
+        let obj;
+        try { obj = JSON.parse(line); } catch (err) { continue; }
+        if (obj.error) throw { code: obj.error.code || "offline", text, message: obj.error.message };
+        if (obj.content) text += obj.content;
+        if (obj.done){ onText?.(text); return text; }
+      }
+      onText?.(text);
+    }
+    return text;
+  } catch (err){
+    if (signal?.aborted || err?.name === "AbortError") throw { code: "cancelled", text };
+    if (err && err.code) throw err;
+    throw { code: "offline", text };
+  }
+}
+
+/* ---------- markdown --------------------------------------------- */
+const esc = s => s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+
+function highlight(code, lang){
+  if (!/^(json|js|javascript|ts|typescript|jsx|tsx|css|html|py|python|java|go|rs|rust|sh|bash)$/i.test(lang||"")) return code;
+  return code
+    .replace(/(&quot;|&#39;|"|')(?:(?!\1)[^\\\n]|\\.)*\1/g, m => `<span class="tok-str">${m}</span>`)
+    .replace(/(^|[^\w<])(\/\/[^\n]*|#[^\n]*)/g, (m,a,b) => `${a}<span class="tok-com">${b}</span>`)
+    .replace(/\b(const|let|var|function|return|if|else|for|while|class|new|await|async|import|from|export|def|self|None|True|False|null|undefined|true|false|try|catch|finally|throw)\b/g, '<span class="tok-key">$1</span>')
+    .replace(/\b(\d+(?:\.\d+)?)\b/g, '<span class="tok-num">$1</span>');
+}
+function inline(t){
+  return t
+    .replace(/`([^`]+)`/g, "<code>$1</code>")
+    .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
+    .replace(/(^|\W)\*([^*\n]+)\*/g, "$1<em>$2</em>")
+    .replace(/~~([^~]+)~~/g, "<del>$1</del>")
+    .replace(/\[([^\]]+)\]\((https?:[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
+}
+function markdown(src){
+  const blocks = [];
+  let text = src.replace(/```(\w*)\n?([\s\S]*?)```/g, (m, lang, code) => {
+    blocks.push({lang: lang || "text", code: code.replace(/\n$/,"")});
+    return `\u0000C${blocks.length-1}\u0000`;
+  });
+  text = esc(text);
+  const lines = text.split("\n");
+  let html = "", list = null, para = [];
+  const fp = () => { if (para.length){ html += `<p>${inline(para.join(" "))}</p>`; para = []; } };
+  const fl = () => { if (list){ html += `</${list}>`; list = null; } };
+
+  for (let i = 0; i < lines.length; i++){
+    const line = lines[i];
+    const ph = line.match(/^\u0000C(\d+)\u0000$/);
+    if (ph){
+      fp(); fl();
+      const b = blocks[+ph[1]];
+      html += `<div class="code"><div class="code-head"><span class="code-lang">${esc(b.lang)}</span>`
+           +  `<button class="code-copy" data-copy="${encodeURIComponent(b.code)}">`
+           +  `<svg class="icon" viewBox="0 0 24 24"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5.5A2.5 2.5 0 0 1 7.5 3H15"/></svg><span>${t('copy')}</span></button></div>`
+           +  `<pre><code>${highlight(esc(b.code), b.lang)}</code></pre></div>`;
+      continue;
+    }
+    if (!line.trim()){ fp(); fl(); continue; }
+    let m;
+    if ((m = line.match(/^(#{1,3})\s+(.*)$/))){ fp(); fl(); html += `<h${m[1].length}>${inline(m[2])}</h${m[1].length}>`; continue; }
+    if (/^(---|\*\*\*|___)\s*$/.test(line)){ fp(); fl(); html += "<hr>"; continue; }
+    if ((m = line.match(/^&gt;\s?(.*)$/))){ fp(); fl(); html += `<blockquote>${inline(m[1])}</blockquote>`; continue; }
+    if (/^\|.*\|\s*$/.test(line) && /^\|[\s:|-]+\|\s*$/.test(lines[i+1]||"")){
+      fp(); fl();
+      const cells = r => r.trim().replace(/^\||\|$/g,"").split("|").map(c => c.trim());
+      let out = `<table><thead><tr>${cells(line).map(c=>`<th>${inline(c)}</th>`).join("")}</tr></thead><tbody>`;
+      i += 2;
+      while (i < lines.length && /^\|.*\|\s*$/.test(lines[i])){ out += `<tr>${cells(lines[i]).map(c=>`<td>${inline(c)}</td>`).join("")}</tr>`; i++; }
+      i--; html += out + "</tbody></table>"; continue;
+    }
+    if ((m = line.match(/^\s*[-*+]\s+(.*)$/))){ fp(); if (list!=="ul"){ fl(); html += "<ul>"; list="ul"; } html += `<li>${inline(m[1])}</li>`; continue; }
+    if ((m = line.match(/^\s*\d+[.)]\s+(.*)$/))){ fp(); if (list!=="ol"){ fl(); html += "<ol>"; list="ol"; } html += `<li>${inline(m[1])}</li>`; continue; }
+    fl(); para.push(line.trim());
+  }
+  fp(); fl();
+  return html;
+}
+
+/* ---------- chats ------------------------------------------------ */
+function newChat(){
+  const c = {id:uid(), title:t("newChat"), createdAt:Date.now(), updatedAt:Date.now(), messages:[]};
+  state.chats.unshift(c);
+  state.activeId = c.id;
+  save(); renderList(); renderThread(); $("#input").focus();
+  return c;
+}
+function removeChat(id){
+  const i = state.chats.findIndex(c => c.id === id);
+  if (i < 0) return;
+  state.chats.splice(i,1);
+  if (state.activeId === id) state.activeId = state.chats[0]?.id || null;
+  save(); renderList(); renderThread();
+  toast(t("chatDeleted"));
+}
+const titleFrom = t => {
+  const s = t.replace(/\s+/g," ").trim();
+  return s.length > 40 ? s.slice(0,40).replace(/\s\S*$/,"") + "…" : (s || tr("newChat"));
+};
+function bucket(ts){
+  const d = new Date(ts), n = new Date();
+  const days = Math.floor((new Date(n.getFullYear(),n.getMonth(),n.getDate()) - new Date(d.getFullYear(),d.getMonth(),d.getDate()))/86400000);
+  if (days <= 0) return t("bToday");
+  if (days === 1) return t("bYesterday");
+  if (days < 7) return t("bWeek");
+  if (days < 30) return t("bMonth");
+  return t("bOlder");
+}
+
+function renderList(){
+  const list = $("#chatList"), items = state.chats;
+  list.innerHTML = "";
+  if (!items.length){
+    list.innerHTML = `<p class="blank" data-i18n="noChats">No chats yet.</p>`;
+    list.querySelector("[data-i18n]").textContent = t("noChats");
+    return;
+  }
+  let group = "";
+  for (const c of items){
+    const b = bucket(c.updatedAt);
+    if (b !== group){
+      group = b;
+      const h = document.createElement("div");
+      h.className = "group"; h.textContent = b;
+      list.appendChild(h);
+    }
+    const row = document.createElement("div");
+    row.className = "row";
+    row.setAttribute("aria-current", c.id === state.activeId ? "true" : "false");
+    row.innerHTML = `<button class="row-title" type="button">${esc(c.title)}</button>
+      <button class="row-act" type="button" data-act="rename" aria-label="${t('renameChat')}"><svg class="icon" viewBox="0 0 24 24"><path d="M4 20h4l10-10-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg></button>
+      <button class="row-act" type="button" data-act="delete" aria-label="${t('deleteChat')}"><svg class="icon" viewBox="0 0 24 24"><path d="M4 7h16M9 7V5h6v2M7 7l1 13h8l1-13"/></svg></button>`;
+    row.querySelector(".row-title").addEventListener("click", () => {
+      state.activeId = c.id; save(); renderList(); renderThread();
+      if (matchMedia("(max-width:860px)").matches) setRail(false);
+    });
+    row.querySelector('[data-act="delete"]').addEventListener("click", e => { e.stopPropagation(); removeChat(c.id); });
+    row.querySelector('[data-act="rename"]').addEventListener("click", e => { e.stopPropagation(); rename(row, c); });
+    list.appendChild(row);
+  }
+}
+function rename(row, c){
+  const label = row.querySelector(".row-title");
+  const input = document.createElement("input");
+  input.className = "rename"; input.value = c.title; input.setAttribute("aria-label", t("chatName"));
+  label.replaceWith(input); input.focus(); input.select();
+  const done = ok => { if (ok && input.value.trim()){ c.title = input.value.trim().slice(0,80); save(); } renderList(); renderThread(); };
+  input.addEventListener("keydown", e => {
+    if (e.key === "Enter"){ e.preventDefault(); done(true); }
+    if (e.key === "Escape") done(false);
+  });
+  input.addEventListener("blur", () => done(true));
+}
+
+function openDialogCentered(d){
+  d.style.transform = "";
+  d.showModal();
+  if (!d.hasAttribute("tabindex")) d.tabIndex = -1;
+  d.focus();
+  const box = document.querySelector(".composer").getBoundingClientRect();
+  const base = d.getBoundingClientRect();
+  const shiftX = (box.left + box.width / 2) - (base.left + base.width / 2);
+  let centerY = box.top;
+  const lo = base.height / 2 + 8;
+  const hi = innerHeight - base.height / 2 - 8;
+  if (centerY < lo) centerY = lo;
+  if (centerY > hi) centerY = hi;
+  const shiftY = centerY - (base.top + base.height / 2);
+  d.style.transform = `translate(${shiftX}px, ${shiftY}px)`;
+}
+
+/* ---------- search card ------------------------------------------- */
+function openSearch(){
+  renderSearch();
+  openDialogCentered($("#searchDialog"));
+  $("#searchBtn").setAttribute("aria-expanded", "true");
+  $("#searchDialogInput").focus();
+}
+function closeSearch(){
+  closeDialog($("#searchDialog"));
+  $("#searchBtn").setAttribute("aria-expanded", "false");
+  $("#searchDialogInput").value = "";
+  state.query = "";
+}
+function isSearchOpen(){
+  return $("#searchDialog").open;
+}
+function renderSearch(){
+  const box = $("#searchResults");
+  const q = state.query.trim().toLowerCase();
+  let items = [...state.chats].sort((a, b) => b.updatedAt - a.updatedAt);
+  if (q) items = items.filter(c =>
+    c.title.toLowerCase().includes(q) ||
+    c.messages.some(m => m.content.toLowerCase().includes(q))
+  );
+  box.innerHTML = "";
+  if (!state.chats.length){
+    box.innerHTML = `<p class="blank">${esc(t("noChats"))}</p>`;
+    return;
+  }
+  if (!items.length){
+    box.innerHTML = `<p class="blank">${esc(t("noMatches"))}</p>`;
+    return;
+  }
+  const head = document.createElement("div");
+  head.className = "sc-head";
+  head.textContent = q ? t("results") : t("latest");
+  box.appendChild(head);
+  let group = "";
+  for (const c of items){
+    const b = bucket(c.updatedAt);
+    if (b !== group){
+      group = b;
+      const h = document.createElement("div");
+      h.className = "sc-head"; h.textContent = b;
+      box.appendChild(h);
+    }
+    const row = document.createElement("div");
+    row.className = "row";
+    row.setAttribute("aria-current", c.id === state.activeId ? "true" : "false");
+    row.innerHTML = `<button class="row-title" type="button">${esc(c.title)}</button>`;
+    row.querySelector(".row-title").addEventListener("click", () => {
+      state.activeId = c.id; save(); renderList(); renderThread(); closeSearch();
+      if (matchMedia("(max-width:860px)").matches) setRail(false);
+      $("#input").focus();
+    });
+    box.appendChild(row);
+  }
+}
+
+/* ---------- thread ----------------------------------------------- */
+const GREETINGS = [
+  "Time to shine",
+  "What's on your mind {name}?",
+  "Good {tod} {name}",
+  "Ready to learn?",
+  "Let's do this {name}",
+  "Study time",
+  "What are we learning today?",
+  "Brainpower engaged",
+  "Fresh ideas are waiting",
+  "What do you want to know?",
+  "Curious minds welcome",
+  "Let's figure this out",
+  "Homework help is ready",
+  "What are we working on?",
+  "Time to get curious",
+  "Ready, set, learn",
+  "What would you like to understand?",
+  "Let's clear up that confusion",
+  "Good to see you {name}",
+  "What's the mission today?",
+  "Learning never stops {name}",
+  "Let's work through it",
+  "What are you stuck on?",
+  "Let's solve it step by step",
+  "Got a question?",
+  "Let's figure it out together",
+  "What should we tackle today?",
+  "Need a hand with something?",
+  "Let's make this make sense",
+  "Ready when you are",
+  "What are you curious about?",
+  "Let's get started",
+  "One question at a time",
+  "Let's learn something new",
+  "What should we explore?",
+  "Stuck on something?",
+  "Let's work it out",
+  "Think. Ask. Learn.",
+  "Your next question starts here",
+  "Let's break it down"
+];
+
+function partOfDay(){
+  const h = new Date().getHours();
+  if (h >= 5 && h < 12) return "morning";
+  if (h >= 12 && h < 18) return "afternoon";
+  return "evening";
+}
+function greeting(){
+  const g = GREETINGS[Math.floor(Math.random() * GREETINGS.length)];
+  const name = (state.settings.name || "").trim() || "there";
+  return g.replace(/\{name\}/g, name).replace(/\{tod\}/g, partOfDay());
+}
+
+function syncWave(){
+  const t = $("#greetText");
+  const gw = document.querySelector(".g-body .wave");
+  if (t && gw && t.textContent && t.getBoundingClientRect){
+    const w = Math.round(t.getBoundingClientRect().width);
+    if (w > 0) gw.style.width = w + "px";
+  }
+}
+if (typeof ResizeObserver !== "undefined"){
+  const gb = document.querySelector(".g-body");
+  if (gb) new ResizeObserver(syncWave).observe(gb);
+}
+function renderThread(){
+  const c = chat(), box = $("#messages");
+  box.innerHTML = "";
+  $("#threadTitle").textContent = c ? c.title : t("newChat");
+  $("#app").dataset.empty = (c && c.messages.length) ? "false" : "true";
+
+  if (!c || !c.messages.length){
+    box.innerHTML = "";
+    $("#greetText").textContent = greeting();
+    syncWave();
+    return;
+  }
+  $("#greetText").textContent = "";
+  c.messages.forEach(m => box.appendChild(messageEl(m, c)));
+  toEnd(true);
+}
+
+function messageEl(msg, c){
+  const el = document.createElement("article");
+  el.className = "msg " + msg.role;
+  el.dataset.id = msg.id;
+
+  const who = document.createElement("div");
+  who.className = "who";
+  who.innerHTML = msg.role === "assistant"
+    ? `<svg class="icon" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="13" rx="2"/><path d="M8 9.5h8M8 13h5"/></svg>Eddy`
+    : t("you");
+  el.appendChild(who);
+
+  if (msg.files?.length){
+    const chips = document.createElement("div");
+    chips.className = "files";
+    msg.files.forEach(f => {
+      const s = document.createElement("span");
+      s.className = "chip";
+      s.innerHTML = `<svg class="icon" viewBox="0 0 24 24"><path d="M14 3v5h5"/><path d="M19 21H5V3h9l5 5z"/></svg><span>${esc(f)}</span>`;
+      chips.appendChild(s);
+    });
+    el.appendChild(chips);
+  }
+
+  const text = document.createElement("div");
+  text.className = "text";
+  text.innerHTML = markdown(msg.content);
+  el.appendChild(text);
+
+  const tools = document.createElement("div");
+  tools.className = "tools";
+  tools.appendChild(tool(t("copy"), "M9 9h12v12H9zM5 15V5.5A2.5 2.5 0 0 1 7.5 3H15", () => { copy(msg.content); toast(t("copied")); }));
+  if (msg.role === "user"){
+    tools.appendChild(tool(t("editResend"), "M4 20h4l10-10-4-4L4 16zM13.5 6.5l4 4", () => edit(msg, c, el, text)));
+  } else {
+    tools.appendChild(tool(t("regenerate"), "M20 12a8 8 0 1 1-2.4-5.7M20 4v5h-5", () => regenerate(msg, c)));
+    const up = tool(t("goodAnswer"), "M7 21V10l5-8 1.5 1.2a2 2 0 0 1 .6 2L13 9h5.5a2 2 0 0 1 2 2.4l-1.3 7A2 2 0 0 1 17.2 20H7z", () => vote(msg,"up",up,down));
+    const down = tool(t("needsWork"), "M17 3v11l-5 8-1.5-1.2a2 2 0 0 1-.6-2L11 15H5.5a2 2 0 0 1-2-2.4l1.3-7A2 2 0 0 1 6.8 4H17z", () => vote(msg,"down",up,down));
+    up.setAttribute("aria-pressed", msg.feedback === "up");
+    down.setAttribute("aria-pressed", msg.feedback === "down");
+    tools.append(up, down);
+  }
+  tools.appendChild(tool(t("del"), "M4 7h16M9 7V5h6v2M7 7l1 13h8l1-13", () => {
+    c.messages = c.messages.filter(m => m.id !== msg.id); save(); renderThread();
+  }));
+  el.appendChild(tools);
+  return el;
+}
+function tool(label, path, fn){
+  const b = document.createElement("button");
+  b.className = "tool"; b.type = "button"; b.title = label; b.setAttribute("aria-label", label);
+  b.innerHTML = `<svg class="icon" viewBox="0 0 24 24"><path d="${path}"/></svg>`;
+  b.addEventListener("click", fn);
+  return b;
+}
+function vote(msg, kind, up, down){
+  msg.feedback = msg.feedback === kind ? null : kind;
+  up.setAttribute("aria-pressed", msg.feedback === "up");
+  down.setAttribute("aria-pressed", msg.feedback === "down");
+  save();
+}
+function edit(msg, c, el, textEl){
+  const original = textEl.innerHTML;
+  textEl.innerHTML = "";
+  const ta = document.createElement("textarea");
+  ta.className = "editor"; ta.value = msg.content; ta.setAttribute("aria-label", t("editResend"));
+  const row = document.createElement("div");
+  row.className = "erow";
+  const ok = document.createElement("button");
+  ok.className = "tbtn primary"; ok.textContent = t("saveResend");
+  const no = document.createElement("button");
+  no.className = "tbtn"; no.textContent = t("cancel");
+  row.append(ok, no);
+  textEl.append(ta, row);
+  ta.focus();
+  no.addEventListener("click", () => { textEl.innerHTML = original; wireCopy(textEl); });
+  ok.addEventListener("click", () => {
+    const v = ta.value.trim();
+    if (!v) return;
+    const i = c.messages.findIndex(m => m.id === msg.id);
+    msg.content = v;
+    c.messages = c.messages.slice(0, i+1);
+    save(); renderThread(); run(c);
+  });
+}
+function regenerate(msg, c){
+  const i = c.messages.findIndex(m => m.id === msg.id);
+  if (i < 0) return;
+  c.messages = c.messages.slice(0, i);
+  save(); renderThread(); run(c);
+}
+
+/* ---------- sending ---------------------------------------------- */
+function turnsFor(c){
+  const sys = state.settings.systemPrompt.trim();
+  const turns = [];
+  if (sys) turns.push({role:"system", content:sys});
+  for (const m of c.messages){
+    if (m.content.trim()) turns.push({role:m.role, content:m.content});
+  }
+  return turns;
+}
+
+async function run(c){
+  if (state.busy) return;
+  const turns = turnsFor(c);
+  if (!turns.length || turns[turns.length-1].role !== "user") return;
+
+  setBusy(true);
+  const pending = {id:uid(), role:"assistant", content:"", ts:Date.now()};
+  const el = messageEl(pending, c);
+  const textEl = el.querySelector(".text");
+  textEl.innerHTML = `<span class="wait" role="status">${esc(t("thinking"))}<i></i><i></i><i></i></span>`;
+  $("#messages").appendChild(el);
+  toEnd();
+
+  state.controller = new AbortController();
+  let raf = null, latest = "";
+  const paint = () => {
+    raf = null;
+    textEl.innerHTML = markdown(latest) + '<span class="caret"></span>';
+    wireCopy(textEl);
+    toEnd();
+  };
+
+  try {
+    const final = await askModel(turns, {
+      tier: state.settings.mode,
+      signal: state.controller.signal,
+      onText: state.settings.stream ? t => { latest = t; if (!raf) raf = requestAnimationFrame(paint); } : undefined
+    });
+    finish(final);
+  } catch (err){
+    const kept = err?.text;
+    if (err?.code === "cancelled"){
+      finish(kept ? kept + "\n\n*" + t("stopped") + "*" : "*" + t("stopped") + "*");
+    } else {
+      const map = {
+        offline: t("errOfflineModel"),
+        model_unavailable: t("errOfflineModel"),
+        rate_limited: t("errRate"),
+        overloaded: t("errBusy")
+      };
+      let m = (err?.code && map[err.code]) || err?.message || t("errGeneric");
+      if (err?.code === "model_unavailable" && err.message) m = err.message;
+      finish((kept ? kept + "\n\n" : "") + "**" + m + "**");
+      toast(m, "error");
+    }
+  } finally {
+    state.controller = null;
+    setBusy(false);
+  }
+
+  function finish(text){
+    if (raf) cancelAnimationFrame(raf);
+    pending.content = text || "";
+    c.messages.push(pending);
+    c.updatedAt = Date.now();
+    save(); renderList();
+    el.replaceWith(messageEl(pending, c));
+    wireCopy($("#messages"));
+    toEnd();
+  }
+}
+
+function send(){
+  if (state.busy) return;
+  const ta = $("#input"), text = ta.value.trim();
+  if (!text && !state.files.length) return;
+  const c = chat() || newChat();
+  let body = text;
+  const names = state.files.map(f => f.name);
+  if (state.files.length) body += "\n\n" + state.files.map(f => `--- ${f.name} ---\n${f.text.slice(0,20000)}`).join("\n\n");
+  c.messages.push({id:uid(), role:"user", content:body, files:names, ts:Date.now()});
+  if (c.messages.length === 1) c.title = titleFrom(text || names[0] || t("newChat"));
+  c.updatedAt = Date.now();
+  ta.value = ""; sizeInput();
+  state.files = []; renderFiles();
+  save(); renderList(); renderThread();
+  run(c);
+}
+
+function setBusy(on){
+  state.busy = on;
+  const b = $("#sendBtn");
+  b.classList.toggle("stop", on);
+  b.disabled = on ? false : (!$("#input").value.trim() && !state.files.length);
+  b.setAttribute("aria-label", on ? t("stop") : t("send"));
+  $("#sendIcon").innerHTML = on
+    ? '<rect x="7" y="7" width="10" height="10" rx="1.5" fill="currentColor" stroke="none"/>'
+    : '<path d="M12 19V5M5.5 11.5L12 5l6.5 6.5"/>';
+  $("#hint").textContent = on
+    ? t("hintStop")
+    : (state.settings.enterSends ? t("hintSend") : t("hintCtr"));
+}
+
+/* ---------- composer, files, scroll ------------------------------ */
+function sizeInput(){
+  const ta = $("#input");
+  ta.style.height = "auto";
+  ta.style.height = Math.min(ta.scrollHeight, 210) + "px";
+  if (!state.busy) $("#sendBtn").disabled = !ta.value.trim() && !state.files.length;
+  document.documentElement.style.setProperty("--ch", $("#cwrap").offsetHeight + "px");
+}
+function renderFiles(){
+  const box = $("#fileList");
+  box.innerHTML = ""; box.hidden = !state.files.length;
+  state.files.forEach((f,i) => {
+    const s = document.createElement("span");
+    s.className = "chip";
+    s.innerHTML = `<svg class="icon" viewBox="0 0 24 24"><path d="M14 3v5h5"/><path d="M19 21H5V3h9l5 5z"/></svg><span>${esc(f.name)}</span>`;
+    const x = document.createElement("button");
+    x.type = "button"; x.setAttribute("aria-label", tr("removeFile", {name: f.name}));
+    x.innerHTML = `<svg class="icon" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>`;
+    x.addEventListener("click", () => { state.files.splice(i,1); renderFiles(); });
+    s.appendChild(x); box.appendChild(s);
+  });
+  sizeInput();
+}
+
+let atEnd = true;
+function toEnd(force){
+  const t = $("#thread");
+  if (force || atEnd) t.scrollTop = t.scrollHeight;
+}
+$("#thread").addEventListener("scroll", () => {
+  const t = $("#thread");
+  atEnd = t.scrollHeight - t.scrollTop - t.clientHeight < 110;
+  $("#jumpBtn").classList.toggle("show", !atEnd);
+});
+
+function copy(text){
+  if (navigator.clipboard?.writeText) navigator.clipboard.writeText(text).catch(() => fallback(text));
+  else fallback(text);
+}
+function fallback(text){
+  const ta = document.createElement("textarea");
+  ta.value = text; ta.style.position = "fixed"; ta.style.opacity = "0";
+  document.body.appendChild(ta); ta.select();
+  try { document.execCommand("copy"); } catch(e){}
+  ta.remove();
+}
+function wireCopy(root){
+  $$(".code-copy", root).forEach(b => {
+    if (b.dataset.wired) return;
+    b.dataset.wired = "1";
+    b.addEventListener("click", () => {
+      copy(decodeURIComponent(b.dataset.copy));
+      const l = b.querySelector("span");
+      l.textContent = t("copied");
+      setTimeout(() => { l.textContent = t("copy"); }, 1500);
+    });
+  });
+}
+new MutationObserver(() => wireCopy(document)).observe($("#messages"), {childList:true, subtree:true});
+
+function toast(text, kind){
+  const t = document.createElement("div");
+  t.className = "toast"; t.textContent = text;
+  if (kind) t.dataset.kind = kind;
+  $("#toasts").appendChild(t);
+  setTimeout(() => t.remove(), 2400);
+}
+
+/* ---------- chrome ------------------------------------------------ */
+function setRail(open){
+  $("#app").dataset.rail = open ? "open" : "closed";
+  $("#scrim").classList.toggle("on", open && matchMedia("(max-width:860px)").matches);
+  $("#railBtn").setAttribute("aria-expanded", String(open));
+}
+function apply(){
+  applySettings();
+  const m = MODES.find(m => m.id === state.settings.mode);
+  $("#modeLabel").textContent = m ? t("mode" + m.id.charAt(0).toUpperCase() + m.id.slice(1) + "Name") : state.settings.mode;
+  setBusy(state.busy);
+  sizeInput();
+}
+
+const menu = $("#modeMenu");
+function openMenu(){
+  menu.classList.add("open");
+  $("#modeBtn").setAttribute("aria-expanded","true");
+  $$(".mi", menu).forEach(b => b.setAttribute("aria-checked", String(b.dataset.id === state.settings.mode)));
+}
+function closeMenu(){
+  menu.classList.remove("open");
+  $("#modeBtn").setAttribute("aria-expanded","false");
+}
+
+/* ---------- events ------------------------------------------------ */
+$("#railBtn").addEventListener("click", () => setRail($("#app").dataset.rail !== "open"));
+$("#scrim").addEventListener("click", () => setRail(false));
+$("#newChatBtn").addEventListener("click", () => { newChat(); if (matchMedia("(max-width:860px)").matches) setRail(false); });
+$("#searchBtn").addEventListener("click", e => { e.stopPropagation(); isSearchOpen() ? closeSearch() : openSearch(); });
+$("#searchDialogInput").addEventListener("input", e => { state.query = e.target.value; renderSearch(); });
+$("#themeBtn").addEventListener("click", () => {
+  state.settings.theme = activeTheme() === "dark" ? "light" : "dark";
+  save(); apply();
+});
+$("#modeBtn").addEventListener("click", e => { e.stopPropagation(); menu.classList.contains("open") ? closeMenu() : openMenu(); });
+document.addEventListener("click", e => { if (!menu.contains(e.target)) closeMenu(); });
+const searchDialog = $("#searchDialog");
+searchDialog.addEventListener("click", e => { if (e.target === searchDialog) closeSearch(); });
+searchDialog.addEventListener("cancel", e => { e.preventDefault(); closeSearch(); });
+
+$("#input").addEventListener("input", sizeInput);
+$("#input").addEventListener("keydown", e => {
+  const go = state.settings.enterSends
+    ? (e.key === "Enter" && !e.shiftKey && !e.ctrlKey && !e.metaKey)
+    : (e.key === "Enter" && (e.ctrlKey || e.metaKey));
+  if (go){ e.preventDefault(); send(); }
+});
+$("#sendBtn").addEventListener("click", () => { state.busy ? state.controller?.abort() : send(); });
+$("#jumpBtn").addEventListener("click", () => {
+  const t = $("#thread");
+  const target = t.scrollHeight;
+  if (t.scrollTop === target) return;
+  if (t.scrollTo) t.scrollTo({ top: target, behavior: "smooth" });
+  else t.scrollTop = target;
+  $("#jumpBtn").classList.remove("show");
+});
+$("#attachBtn").addEventListener("click", () => $("#fileInput").click());
+$("#fileInput").addEventListener("change", async e => {
+  for (const f of [...e.target.files].slice(0,5)){
+    if (f.size > 400000){ toast(tr("errFileTooLarge", {name:f.name}), "error"); continue; }
+    try { state.files.push({name:f.name, text: await f.text()}); }
+    catch (err){ toast(tr("errFileRead", {name:f.name}), "error"); }
+  }
+  e.target.value = "";
+  renderFiles();
+});
+$("#input").addEventListener("dragover", e => e.preventDefault());
+$("#input").addEventListener("drop", async e => {
+  e.preventDefault();
+  for (const f of [...e.dataTransfer.files].slice(0,5)){
+    if (f.type && !/^text|json|csv|javascript/.test(f.type)){ toast(tr("errFileType", {name:f.name}), "error"); continue; }
+    state.files.push({name:f.name, text: await f.text()});
+  }
+  renderFiles();
+});
+
+const DIALOG_MS = matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 200;
+function closeDialog(d){
+  if (!d?.open) return;
+  d.classList.add("closing");
+  setTimeout(() => { d.close(); d.classList.remove("closing"); }, DIALOG_MS);
+}
+
+const settingsDialog = $("#settingsDialog");
+const settingsSearch = $("#settingsSearch");
+const setNavBtns = $$("#setNav .set-nav-btn");
+function switchSettingsPane(section){
+  setNavBtns.forEach(x => x.setAttribute("aria-current", x.dataset.section === section ? "true" : "false"));
+  $$(".set-pane").forEach(p => p.classList.toggle("on", p.dataset.pane === section));
+  placeSegThumbs(false);
+}
+function settingsText(root){
+  let t = (root.textContent || "").toLowerCase();
+  root.querySelectorAll("[aria-label],[title]").forEach(x => t += " " + (x.getAttribute("aria-label") || x.getAttribute("title") || "").toLowerCase());
+  return t;
+}
+function filterSettings(){
+  const needle = settingsSearch.value.trim().toLowerCase();
+  let hits = [];
+  $$(".set-pane").forEach(p => {
+    let hit = !needle;
+    if (!hit) hit = settingsText(p).includes(needle);
+    const btn = setNavBtns.find(b => b.dataset.section === p.dataset.pane);
+    btn.classList.toggle("hide", !hit);
+    if (hit) hits.push(p);
+    p.querySelectorAll(".sec-title, .field").forEach(it => {
+      it.style.display = needle && !settingsText(it).includes(needle) ? "none" : "";
+    });
+  });
+  $("#setEmpty").classList.toggle("show", !!needle && !hits.length);
+  if (needle && hits.length){
+    const cur = $(".set-pane.on");
+    if (!cur || !hits.includes(cur)) switchSettingsPane(hits[0].dataset.pane);
+  }
+  placeSegThumbs(false);
+}
+settingsSearch.addEventListener("input", filterSettings);
+$("#settingsBtn").addEventListener("click", () => {
+  settingsSearch.value = "";
+  filterSettings();
+  openDialogCentered($("#settingsDialog"));
+  setTimeout(() => placeSegThumbs(false), 200);
+});
+settingsDialog.addEventListener("click", e => { if (e.target === settingsDialog) closeDialog(settingsDialog); });
+settingsDialog.addEventListener("cancel", e => { e.preventDefault(); closeDialog(settingsDialog); });
+$("#shortcutsBtn").addEventListener("click", () => $("#shortcutsDialog").showModal());
+$$("[data-close]").forEach(b => b.addEventListener("click", () => closeDialog(b.closest("dialog"))));
+$("#systemPrompt").addEventListener("input", e => { state.settings.systemPrompt = e.target.value; save(); });
+$$("#themeSeg button").forEach(b => b.addEventListener("click", () => { state.settings.theme = b.dataset.themeVal; save(); apply(); placeSegThumb($("#themeSeg")); }));
+$$("#sizeSeg button").forEach(b => b.addEventListener("click", () => { state.settings.fontScale = +b.dataset.size; save(); apply(); placeSegThumb($("#sizeSeg")); }));
+$("#langSelect").addEventListener("change", () => { state.settings.lang = $("#langSelect").value; save(); apply(); });
+$$("#fontSeg button").forEach(b => b.addEventListener("click", () => { state.settings.fontFamily = b.dataset.font; save(); apply(); placeSegThumb($("#fontSeg")); }));
+$("#enterSwitch").addEventListener("click", () => { state.settings.enterSends = !state.settings.enterSends; save(); apply(); });
+$("#streamSwitch").addEventListener("click", () => { state.settings.stream = !state.settings.stream; save(); apply(); });
+$$("#setNav .set-nav-btn").forEach(b => b.addEventListener("click", () => {
+  $$("#setNav .set-nav-btn").forEach(x => x.setAttribute("aria-current", x === b ? "true" : "false"));
+  $$(".set-pane").forEach(p => p.classList.toggle("on", p.dataset.pane === b.dataset.section));
+  placeSegThumbs(false);
+}));
+$("#exportBtn").addEventListener("click", () => {
+  const blob = new Blob([JSON.stringify({app:"eddy", version:1, exportedAt:new Date().toISOString(), chats:state.chats}, null, 2)], {type:"application/json"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob); a.download = "eddy-chats.json"; a.click();
+  URL.revokeObjectURL(a.href);
+  toast(t("exported"));
+});
+$("#wipeBtn").addEventListener("click", () => {
+  confirmDialogBox({
+    title: t("wipeTitle"),
+    text: t("wipeText"),
+    warn: t("cannotUndo"),
+    okLabel: t("deleteAll"),
+    onOk: () => {
+      state.chats = []; state.activeId = null;
+      try { localStorage.removeItem(KEY); } catch(e){}
+      save(); renderList(); renderThread();
+      toast(t("chatsDeleted"));
+    }
+  });
+});
+
+$("#authTabLogin").addEventListener("click", () => setAuthMode("login"));
+$("#authTabRegister").addEventListener("click", () => setAuthMode("register"));
+$("#authSwitchBtn").addEventListener("click", () => setAuthMode(authMode === "login" ? "register" : "login"));
+$("#authForm").addEventListener("submit", e => { e.preventDefault(); submitAuth(); });
+
+const confirmDialog = $("#confirmDialog");
+$("#confirmOk").addEventListener("click", () => {
+  const pass = confirmPassword ? $("#confirmPass").value : "";
+  closeDialog(confirmDialog);
+  const cb = confirmCb; confirmCb = null;
+  if (cb) cb(pass);
+});
+$("#confirmCancel").addEventListener("click", () => { confirmCb = null; closeDialog(confirmDialog); });
+confirmDialog.addEventListener("cancel", e => { e.preventDefault(); closeDialog(confirmDialog); });
+
+document.addEventListener("keydown", e => {
+  if ($("#app").classList.contains("hide")) return;
+  const mod = e.ctrlKey || e.metaKey;
+  if (mod && e.shiftKey && e.key.toLowerCase() === "o"){ e.preventDefault(); newChat(); }
+  else if (mod && e.key.toLowerCase() === "k"){ e.preventDefault(); setRail(true); openSearch(); }
+  else if (mod && e.key === "/"){ e.preventDefault(); $("#input").focus(); }
+  else if (mod && e.key.toLowerCase() === "b"){ e.preventDefault(); setRail($("#app").dataset.rail !== "open"); }
+  else if (e.key === "Escape"){
+    if (state.busy){ state.controller?.abort(); return; }
+    if ($("#settingsDialog").open || isSearchOpen() || $("#confirmDialog").open) return;
+    closeMenu();
+    if (matchMedia("(max-width:860px)").matches) setRail(false);
+  }
+});
+window.addEventListener("resize", () => {
+  sizeInput();
+  placeSegThumbs(false);
+  if (!matchMedia("(max-width:860px)").matches) $("#scrim").classList.remove("on");
+});
+
+load();
+state.activeId = null;
+if (matchMedia("(max-width:860px)").matches) setRail(false);
+apply();
+renderList();
+renderThread();
+authInit();
+
+fetch("health", { cache: "no-store" })
+  .then(r => r.json())
+  .then(h => {
+    if (!h.ready) toast(t("errOfflineModel"), "error");
+  })
+  .catch(() => {
+    toast(t("errOfflineModel"), "error");
+  });
+})();
+</script>
+</body>
+</html>
