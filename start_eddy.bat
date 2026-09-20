@@ -4,7 +4,6 @@ title Eddy
 
 cd /d "%~dp0"
 
-rem ---------- Python ----------
 set "PY="
 where py >nul 2>nul && set "PY=py -3"
 if not defined PY (
@@ -18,7 +17,6 @@ if not defined PY (
   exit /b 1
 )
 
-rem ---------- Ollama ----------
 where ollama >nul 2>nul
 if errorlevel 1 (
   echo Ollama was not found.
@@ -28,7 +26,6 @@ if errorlevel 1 (
   exit /b 1
 )
 
-rem ---------- Python dependencies ----------
 %PY% -m pip install -r requirements.txt >nul
 if errorlevel 1 (
   echo Could not install Python dependencies.
@@ -39,7 +36,6 @@ if errorlevel 1 (
   exit /b 1
 )
 
-rem ---------- Run ----------
 %PY% server.py
 set "CODE=%ERRORLEVEL%"
 

@@ -9,9 +9,6 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
 <style>
-/* ---------------------------------------------------------
-   tokens — black base, blue is an accent and nothing more
-   --------------------------------------------------------- */
 :root{
   --font:"Inter","Segoe UI",system-ui,-apple-system,sans-serif;
   --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
@@ -71,9 +68,6 @@ button{background:none;border:0;cursor:pointer}
 
 .app{display:flex;height:100dvh;overflow:hidden}
 
-/* ---------------------------------------------------------
-   sidebar — square panel, square rows
-   --------------------------------------------------------- */
 .sidebar{
   width:var(--sidebar-w);flex:0 0 var(--sidebar-w);display:flex;flex-direction:column;
   background:var(--panel);border-right:1px solid var(--line);
@@ -143,9 +137,6 @@ input[type="search"]::-webkit-search-cancel-button{-webkit-appearance:none;appea
 .scrim{position:fixed;inset:0;background:rgba(0,0,0,.6);opacity:0;pointer-events:none;transition:opacity var(--dur);z-index:30}
 .scrim.on{opacity:1;pointer-events:auto}
 
-/* ---------------------------------------------------------
-   main
-   --------------------------------------------------------- */
 .main{flex:1;min-width:0;display:flex;flex-direction:column;position:relative}
 .topbar{display:flex;align-items:center;gap:4px;height:52px;padding:0 10px}
 .topbar h1{flex:1;min-width:0;margin:0 6px;font-size:.88rem;font-weight:500;color:var(--text-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -170,9 +161,6 @@ input[type="search"]::-webkit-search-cancel-button{-webkit-appearance:none;appea
 .mi .icon{width:15px;height:15px;margin-top:3px;color:var(--blue);opacity:0}
 .mi[aria-checked="true"] .icon{opacity:1}
 
-/* ---------------------------------------------------------
-   thread — a transcript, not a stack of cards
-   --------------------------------------------------------- */
 .thread{flex:1;overflow-y:auto;padding:24px 20px 0}
 .inner{max-width:720px;margin:0 auto;padding-bottom:28px}
 
@@ -231,7 +219,6 @@ input[type="search"]::-webkit-search-cancel-button{-webkit-appearance:none;appea
 .chip button{color:var(--text-3);display:grid;place-items:center}
 .chip button:hover{color:var(--red)}
 
-/* empty state */
 .start{max-width:720px;margin:0 auto;padding:12vh 0 40px}
 .start h2{margin:0 0 6px;font-size:1.5rem;font-weight:600;letter-spacing:-.01em}
 .start p{margin:0 0 26px;color:var(--text-2);font-size:.92rem;max-width:50ch}
@@ -272,9 +259,6 @@ input[type="search"]::-webkit-search-cancel-button{-webkit-appearance:none;appea
 .jump.show{opacity:1;pointer-events:auto}
 .jump:hover{color:var(--text)}
 
-/* ---------------------------------------------------------
-   composer — this is the rounded one
-   --------------------------------------------------------- */
 .cwrap{padding:10px 20px 18px;background:var(--bg)}
 .composer{
   position:relative;
@@ -292,9 +276,6 @@ input[type="search"]::-webkit-search-cancel-button{-webkit-appearance:none;appea
 .send:disabled{opacity:.3;cursor:not-allowed}
 .send.stop{background:var(--red)}
 
-/* ---------------------------------------------------------
-   dialogs, toasts
-   --------------------------------------------------------- */
 dialog{
   border:1px solid var(--line-2);background:var(--raise);color:var(--text);border-radius:12px;padding:0;
   width:min(520px,calc(100vw - 28px));
@@ -353,7 +334,6 @@ input:-webkit-autofill:focus{
 .keys span{color:var(--text-2)}
 kbd{font-family:var(--mono);font-size:.72rem;background:var(--bg);border:1px solid var(--line-2);border-radius:4px;padding:2px 6px;color:var(--text-2)}
 
-/* settings dialog — two-column layout */
 #settingsDialog{width:min(680px,calc(100vw - 28px))}
 .set-body{position:relative;display:grid;grid-template-columns:176px 1fr;height:min(70dvh,600px);min-height:420px}
 .set-side{display:flex;flex-direction:column;min-height:0;border-right:1px solid var(--line);background:var(--bg)}
@@ -397,7 +377,6 @@ kbd{font-family:var(--mono);font-size:.72rem;background:var(--bg);border:1px sol
 
 .hide{display:none!important}
 
-/* top-level auth screen (login / registration) */
 .auth-screen{position:fixed;inset:0;display:grid;place-items:center;background:var(--bg);z-index:70;padding:24px}
 .auth-card{width:min(360px,100%);display:flex;flex-direction:column;align-items:flex-start}
 .auth-card .mark{width:46px;height:46px;align-self:center;margin:0 0 10px}
@@ -420,7 +399,6 @@ kbd{font-family:var(--mono);font-size:.72rem;background:var(--bg);border:1px sol
 .auth-switch button{color:var(--blue);font-size:.8rem}
 .auth-switch button:hover{text-decoration:underline}
 
-/* confirm dialog */
 #confirmDialog{width:min(400px,calc(100vw - 28px))}
 .confirm-body{padding:18px}
 .confirm-body .confirm-title{margin:0 0 8px;font-size:.95rem;font-weight:600}
@@ -624,7 +602,6 @@ kbd{font-family:var(--mono);font-size:.72rem;background:var(--bg);border:1px sol
 
     <div class="set-panes">
       <div class="set-empty" id="setEmpty" data-i18n="noSettingsResults">No settings match that.</div>
-      <!-- General -->
       <section class="set-pane on" data-pane="general" aria-label="General">
         <h3 class="set-hdr" data-i18n="secGeneral">General</h3>
         <p class="sec-title" data-i18n="secDesign">Design</p>
@@ -657,13 +634,11 @@ kbd{font-family:var(--mono);font-size:.72rem;background:var(--bg);border:1px sol
         </div>
       </section>
 
-      <!-- Profile -->
       <section class="set-pane" data-pane="profile" aria-label="Profile">
         <h3 class="set-hdr" data-i18n="secProfile">Profile</h3>
         <div id="profileBody"><!-- filled by renderProfile() --></div>
       </section>
 
-      <!-- Data -->
       <section class="set-pane" data-pane="data" aria-label="Data">
         <h3 class="set-hdr" data-i18n="secData">Data</h3>
         <p class="sec-title" data-i18n="secChats">Chats</p>
@@ -682,7 +657,6 @@ kbd{font-family:var(--mono);font-size:.72rem;background:var(--bg);border:1px sol
         <p class="help" id="dataNote" data-i18n="dataNote">Nothing leaves this browser.</p>
       </section>
 
-      <!-- Personalisation -->
       <section class="set-pane" data-pane="personal" aria-label="Personalisation">
         <h3 class="set-hdr" data-i18n="secPersonal">Personalisation</h3>
         <div class="field">
@@ -967,7 +941,6 @@ function save(){
   }, 200);
 }
 
-/* ---------- language -------------------------------------------- */
 function detectLang(){
   const code = (navigator.language || "").split("-")[0].toLowerCase();
   return code === "de" ? "de" : "en";
@@ -995,7 +968,6 @@ function applyLang(){
   renderUserChip();
 }
 
-/* ---------- theme ----------------------------------------------- */
 const systemDark = () => matchMedia("(prefers-color-scheme: dark)").matches;
 function activeTheme(){
   return state.settings.theme === "system" ? (systemDark() ? "dark" : "light") : state.settings.theme;
@@ -1009,7 +981,6 @@ function applyTheme(){
   $$("#themeSeg button").forEach(b => b.setAttribute("aria-checked", String(b.dataset.themeVal === state.settings.theme)));
 }
 
-/* ---------- account / auth -------------------------------------- */
 async function apiAuth(path, { method = "POST", body } = {}){
   const res = await fetch(path, {
     method,
@@ -1051,7 +1022,6 @@ function authErrorLabel(data){
   if (code && map[code]) return map[code];
   return (data && data.error && data.error.message) || t("errGeneric");
 }
-function tokenGet(){ return auth.token; }
 function setSession(token, user){
   auth.token = token || "";
   auth.user = user || null;
@@ -1136,7 +1106,6 @@ function renderUserChip(){
   }
 }
 
-/* ---------- top-level auth gate ---------------------------------- */
 function showApp(){
   $("#authScreen").classList.add("hide");
   $("#app").classList.remove("hide");
@@ -1169,7 +1138,6 @@ async function authInit(){
   showAuth();
 }
 
-/* ---------- login / registration screen --------------------------- */
 const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
 let authMode = "login";
 function setAuthMode(mode){
@@ -1302,7 +1270,6 @@ function renderProfile(){
   });
 }
 
-/* ---------- confirmation dialog ---------------------------------- */
 let confirmCb = null;
 let confirmPassword = false;
 function confirmDialogBox(opts){
@@ -1319,7 +1286,6 @@ function confirmDialogBox(opts){
   if (confirmPassword) setTimeout(() => $("#confirmPass").focus(), 130);
 }
 
-/* ---------- settings window -------------------------------------- */
 function applySettings(){
   applyTheme();
   document.documentElement.style.setProperty("--fs", state.settings.fontScale);
@@ -1358,7 +1324,6 @@ function placeSegThumbs(animate = true){
   $$(".seg").forEach(seg => placeSegThumb(seg, animate));
 }
 
-/* ---------- brand ------------------------------------------------ */
 function buildModeMenu(){
   const menu = $("#modeMenu");
   if (!menu) return;
@@ -1382,10 +1347,6 @@ function buildModeMenu(){
   });
 }
 
-/* ---------- model ------------------------------------------------
-   askModel is the only place the UI touches a model. It talks to the
-   local backend at /api/chat, which forwards to Ollama on this PC.
-   ---------------------------------------------------------------- */
 const CHAT_ENDPOINT = "/api/chat";
 
 async function askModel(turns, { onText, signal, tier }){
@@ -1450,7 +1411,6 @@ async function readStream(reader, onText, signal){
   }
 }
 
-/* ---------- markdown --------------------------------------------- */
 const esc = s => s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
 
 function highlight(code, lang){
@@ -1514,7 +1474,6 @@ function markdown(src){
   return html;
 }
 
-/* ---------- chats ------------------------------------------------ */
 function newChat(){
   const c = {id:uid(), title:t("newChat"), createdAt:Date.now(), updatedAt:Date.now(), messages:[]};
   state.chats.unshift(c);
@@ -1606,7 +1565,6 @@ function openDialogCentered(d){
   d.style.transform = `translate(${shiftX}px, ${shiftY}px)`;
 }
 
-/* ---------- search card ------------------------------------------- */
 function openSearch(){
   renderSearch();
   openDialogCentered($("#searchDialog"));
@@ -1665,7 +1623,6 @@ function renderSearch(){
   }
 }
 
-/* ---------- thread ----------------------------------------------- */
 const GREETINGS = [
   "Time to shine",
   "What's on your mind {name}?",
@@ -1842,7 +1799,6 @@ function regenerate(msg, c){
   save(); renderThread(); run(c);
 }
 
-/* ---------- sending ---------------------------------------------- */
 function turnsFor(c){
   const sys = state.settings.systemPrompt.trim();
   const turns = [];
@@ -1946,7 +1902,6 @@ function setBusy(on){
     : (state.settings.enterSends ? t("hintSend") : t("hintCtr"));
 }
 
-/* ---------- composer, files, scroll ------------------------------ */
 function sizeInput(){
   const ta = $("#input");
   ta.style.height = "auto";
@@ -2014,7 +1969,6 @@ function toast(text, kind){
   setTimeout(() => t.remove(), 2400);
 }
 
-/* ---------- chrome ------------------------------------------------ */
 function setRail(open){
   $("#app").dataset.rail = open ? "open" : "closed";
   $("#scrim").classList.toggle("on", open && matchMedia("(max-width:860px)").matches);
@@ -2039,7 +1993,6 @@ function closeMenu(){
   $("#modeBtn").setAttribute("aria-expanded","false");
 }
 
-/* ---------- events ------------------------------------------------ */
 $("#railBtn").addEventListener("click", () => setRail($("#app").dataset.rail !== "open"));
 $("#scrim").addEventListener("click", () => setRail(false));
 $("#newChatBtn").addEventListener("click", () => { newChat(); if (matchMedia("(max-width:860px)").matches) setRail(false); });

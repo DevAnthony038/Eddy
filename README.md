@@ -10,6 +10,8 @@ http://localhost:8000        - eddy.html (the chat UI)
 http://localhost:8000/api/chat  - server.py -> Ollama 127.0.0.1:11434 -> Llama
 ```
 
+![Eddy UI](image.png)
+
 ## Requirements
 
 - Windows

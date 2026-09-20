@@ -1,12 +1,8 @@
 #!/usr/bin/env python3
 """Eddy — local chat backend.
 
-Serves eddy.html and forwards chat requests to a Llama model running in
-Ollama on this same machine. Everything is bound to 127.0.0.1, so nothing
-leaves the PC.
-
-Run with:
-    python server.py
+Serves eddy.html and forwards chat requests to an Ollama model on this
+machine. Bound to 127.0.0.1.
 """
 
 import hashlib
@@ -57,10 +53,7 @@ LOG_FILE = os.environ.get("EDDY_LOG_FILE") or os.path.join(BASE_DIR, "chat_log.j
 _log_lock = threading.Lock()
 _print_lock = threading.Lock()
 
-# ---------------------------------------------------------------------------
-# Local account store (prototype). Accounts and sessions live in plain JSON
-# files under data/; passwords are PBKDF2-hashed, never stored in plaintext.
-# ---------------------------------------------------------------------------
+# Accounts/sessions live in plain JSON under data/; passwords are PBKDF2-hashed.
 DATA_DIR = os.path.join(BASE_DIR, "data")
 USERS_FILE = os.path.join(DATA_DIR, "users.json")
 SESSIONS_FILE = os.path.join(DATA_DIR, "sessions.json")
@@ -194,7 +187,6 @@ def print_prompt(entry):
 
 
 def write_log(entry):
-    """Append one exchange to the JSON log file (a plain JSON array)."""
     if not LOG_ENABLED:
         return
     try:
@@ -217,12 +209,7 @@ def write_log(entry):
         print(f"[eddy] Could not write {LOG_FILE}: {exc}")
 
 
-# ---------------------------------------------------------------------------
-# Ollama helpers
-# ---------------------------------------------------------------------------
-
 def ollama_tags():
-    """Return the set of installed model names (empty if Ollama is down)."""
     try:
         with urllib.request.urlopen(OLLAMA_HOST + "/api/tags", timeout=5) as resp:
             data = json.loads(resp.read().decode("utf-8"))
@@ -245,7 +232,6 @@ def model_installed():
 
 
 def ollama_stream(path, payload, timeout=180):
-    """Yield parsed JSON objects from an Ollama API POST (stream mode)."""
     data = json.dumps(payload).encode("utf-8")
     req = urllib.request.Request(
         OLLAMA_HOST + path,
@@ -265,7 +251,6 @@ def ollama_stream(path, payload, timeout=180):
 
 
 def find_ollama():
-    """Path to the ollama command, or None if it is not installed."""
     exe = shutil.which("ollama")
     if exe:
         return exe
@@ -302,7 +287,6 @@ def pull_model():
 
 
 def prepare_model():
-    """Check Ollama is present and running, and that the model is pulled."""
     if not find_ollama() and not ollama_reachable():
         print("Ollama was not found.\n")
         print("Install Ollama and restart Eddy.")
@@ -318,14 +302,8 @@ def prepare_model():
     return True
 
 
-# ---------------------------------------------------------------------------
-# HTTP handlers
-# ---------------------------------------------------------------------------
-
 class EddyRequestHandler(BaseHTTPRequestHandler):
     server_version = "Eddy/1.0"
-
-    # -- response helpers --------------------------------------------------
 
     def send_json(self, status, obj):
         body = json.dumps(obj).encode("utf-8")
@@ -351,8 +329,6 @@ class EddyRequestHandler(BaseHTTPRequestHandler):
             return json.loads(self.rfile.read(length).decode("utf-8"))
         except (ValueError, UnicodeDecodeError, OSError):
             return None
-
-    # -- routing -----------------------------------------------------------
 
     def do_GET(self):
         path = self.path.split("?", 1)[0]
@@ -429,8 +405,6 @@ class EddyRequestHandler(BaseHTTPRequestHandler):
         self.send_header("Cache-Control", "no-store")
         self.end_headers()
         self.wfile.write(body)
-
-    # -- auth --------------------------------------------------------------
 
     def _auth_error(self, code, message, status=400):
         self.send_json(status, {"error": {"code": code, "message": message}})
@@ -688,8 +662,6 @@ class EddyRequestHandler(BaseHTTPRequestHandler):
                     break
         return self.send_json(200, {"ok": True, "user": updated})
 
-    # -- chat --------------------------------------------------------------
-
     def handle_chat(self):
         data = self.read_json_body()
         if data is None:
@@ -746,7 +718,7 @@ class EddyRequestHandler(BaseHTTPRequestHandler):
         # Fetch the first token before replying so connection failures surface
         # as a clean error response instead of a broken stream.
         try:
-            gen = self._chat(payload)
+            gen = ollama_stream("/api/chat", payload)
             first = next(gen)
         except StopIteration:
             return self.finish_error(entry, "Ollama returned no data.", 502,
@@ -855,25 +827,6 @@ class EddyRequestHandler(BaseHTTPRequestHandler):
             pass
 
     @staticmethod
-    def _chat(payload):
-        data = json.dumps(payload).encode("utf-8")
-        req = urllib.request.Request(
-            OLLAMA_HOST + "/api/chat",
-            data=data,
-            headers={"Content-Type": "application/json"},
-            method="POST",
-        )
-        with urllib.request.urlopen(req, timeout=180) as resp:
-            for raw in resp:
-                raw = raw.strip()
-                if not raw:
-                    continue
-                try:
-                    yield json.loads(raw.decode("utf-8"))
-                except ValueError:
-                    continue
-
-    @staticmethod
     def _upstream_message(exc):
         if isinstance(exc, urllib.error.URLError):
             reason = getattr(exc, "reason", exc)
@@ -884,10 +837,6 @@ class EddyRequestHandler(BaseHTTPRequestHandler):
             return "Ollama took too long to respond."
         return f"Cannot reach Ollama: {exc}"
 
-
-# ---------------------------------------------------------------------------
-# Startup
-# ---------------------------------------------------------------------------
 
 def run():
     # Keep banners/pull progress visible even when stdout is redirected.
