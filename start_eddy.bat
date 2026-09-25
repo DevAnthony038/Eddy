@@ -17,15 +17,6 @@ if not defined PY (
   exit /b 1
 )
 
-where ollama >nul 2>nul
-if errorlevel 1 (
-  echo Ollama was not found.
-  echo Install it from https://ollama.com/download and run this again.
-  echo.
-  pause
-  exit /b 1
-)
-
 %PY% -m pip install -r requirements.txt >nul
 if errorlevel 1 (
   echo Could not install Python dependencies.

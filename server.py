@@ -13,7 +13,9 @@ import re
 import secrets
 import shutil
 import socket
+import subprocess
 import sys
+import tempfile
 import threading
 import time
 import urllib.error
@@ -262,6 +264,93 @@ def find_ollama():
     return None
 
 
+def _download(url, dest, timeout=300):
+    """Stream a URL to a local file, printing progress to the console."""
+    with urllib.request.urlopen(url, timeout=timeout) as resp, open(dest, "wb") as fh:
+        total = int(resp.headers.get("Content-Length") or 0)
+        done = 0
+        while True:
+            chunk = resp.read(1 << 16)
+            if not chunk:
+                break
+            fh.write(chunk)
+            done += len(chunk)
+            if total:
+                pct = int(100 * done / total)
+                sys.stdout.write(f"\r  {pct:3d}%  {done >> 20} MB / {total >> 20} MB  ")
+                sys.stdout.flush()
+    sys.stdout.write("\n")
+
+
+def install_ollama():
+    """Download and install Ollama on the current OS if it is missing."""
+    print()
+    if sys.platform.startswith("win"):
+        print("Ollama was not found. Downloading the Windows installer...")
+        dest = os.path.join(tempfile.gettempdir(), "OllamaSetup.exe")
+        try:
+            _download("https://ollama.com/download/OllamaSetup.exe", dest)
+        except OSError as exc:
+            print(f"  Download failed: {exc}")
+            return False
+        print("  Installing (no administrator rights needed)...")
+        try:
+            subprocess.run(
+                [dest, "/VERYSILENT", "/NORESTART", "/SUPPRESSMSGBOXES"],
+                check=True, timeout=600,
+            )
+        except (OSError, subprocess.SubprocessError) as exc:
+            print(f"  Installer failed: {exc}")
+            return False
+        print("  Ollama installed.")
+        return True
+    if sys.platform == "darwin" or sys.platform.startswith("linux"):
+        script = os.path.join(tempfile.gettempdir(), "ollama_install.sh")
+        try:
+            print("  Downloading the official install script...")
+            subprocess.run(
+                ["curl", "-fSL", "https://ollama.com/install.sh", "-o", script],
+                check=True,
+            )
+            print("  Running the install script...")
+            subprocess.run(["sh", script], check=True)
+        except (OSError, subprocess.SubprocessError) as exc:
+            print(f"  Install failed: {exc}")
+            return False
+        print("  Ollama installed.")
+        return True
+    print(f"  Automatic installation is not supported on {sys.platform}.")
+    return False
+
+
+def start_ollama():
+    """Launch the Ollama background service and wait until its API is up."""
+    exe = find_ollama()
+    if not exe:
+        return False
+    print("  Starting Ollama...")
+    try:
+        if sys.platform.startswith("win"):
+            subprocess.Popen(
+                [exe, "serve"],
+                creationflags=subprocess.CREATE_NO_WINDOW,
+                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+            )
+        else:
+            subprocess.Popen(
+                [exe, "serve"],
+                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+            )
+    except OSError as exc:
+        print(f"  Could not start Ollama: {exc}")
+        return False
+    for _ in range(30):
+        if ollama_reachable():
+            return True
+        time.sleep(1)
+    return ollama_reachable()
+
+
 def pull_model():
     print(f"Pulling model '{MODEL}' (first run only). This can take a few minutes...")
     last = None
@@ -288,13 +377,15 @@ def pull_model():
 
 def prepare_model():
     if not find_ollama() and not ollama_reachable():
-        print("Ollama was not found.\n")
-        print("Install Ollama and restart Eddy.")
-        return False
+        if not install_ollama():
+            print("\nCould not install Ollama automatically.")
+            print("Install it from https://ollama.com/download and restart Eddy.")
+            return False
     if not ollama_reachable():
-        print("Ollama is installed but not running.\n")
-        print("Start Ollama and restart Eddy.")
-        return False
+        if not start_ollama():
+            print("\nOllama is installed but could not be started.")
+            print("Start Ollama and restart Eddy.")
+            return False
     if not model_installed():
         if not pull_model():
             print("Could not download the model. Is Ollama running and online?")
