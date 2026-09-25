@@ -415,9 +415,10 @@ kbd{font-family:var(--mono);font-size:.72rem;background:var(--bg);border:1px sol
 .auth-screen{position:fixed;inset:0;display:grid;place-items:center;background:var(--bg);z-index:70;padding:24px;overflow-y:auto}
 .auth-card{position:relative;z-index:1;width:min(100%,320px);display:flex;flex-direction:column;align-items:center}
 .auth-blur{position:absolute;inset:-18px;z-index:-1;border-radius:28px;border:1px solid var(--card-line);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
-.eddy-char{position:absolute;right:clamp(14px,3.5vw,26px);bottom:0;width:min(190px,32vw);z-index:0;pointer-events:none;line-height:0}
+.eddy-layer{position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:0}
+.eddy-char{position:absolute;top:0;left:0;width:min(120px,20vw);transform-origin:50% 50%;z-index:0;pointer-events:none;line-height:0}
 .eddy-char svg{display:block;width:100%;height:auto}
-@media (max-height:600px){.eddy-char{width:min(150px,26vw)}}
+@media (max-height:600px){.eddy-char{width:min(100px,16vw)}}
 @media (max-height:470px){.eddy-char{display:none}}
 .auth-card .mark{width:44px;height:44px;align-self:center;margin:0 0 18px}
 .auth-head{margin:0 0 30px;font-size:1.3rem;font-weight:600;letter-spacing:-.01em}
@@ -2454,10 +2455,11 @@ $("#authForgot").addEventListener("click", () => {
   note.hidden = !note.hidden;
   if (!note.hidden && note.scrollIntoView) note.scrollIntoView({ block: "nearest", behavior: "smooth" });
 });
-// ── Eddy login character: self-contained wall-entrance waving loop (bottom-right) ──
+// ── Eddy login character: self-contained wall-entrance waving loop ──
 // Vanilla single-file component (logical equivalent of an <EddyLoginCharacter/>):
 // the original SMIL animation is embedded verbatim so Eddy keeps his exact
-// design, wave motion and 12s rise/hold/fall loop. Purely decorative.
+// design, wave motion and 12s loop. Each 12s loop he re-enters through the
+// screen border from a random side and position. Purely decorative.
 function EddyLoginCharacter(){
   const host = document.createElement("div");
   host.className = "eddy-char";
@@ -2477,16 +2479,49 @@ function EddyLoginCharacter(){
     </g>
     <animateTransform attributeName="transform" type="translate" values="0 520;0 0;0 0;0 520;0 520" keyTimes="0;.1667;.8333;.9167;1" dur="12s" calcMode="spline" keySplines="0.42 0 0.58 1;0 0 1 1;0.42 0 0.58 1;0 0 1 1" repeatCount="indefinite" /></g><rect x="0" y="643" width="1000" height="14" fill="#05070A" /><line x1="0" y1="643" x2="1000" y2="643" stroke="#05070A" stroke-width="8" stroke-linecap="round" /></svg>`;
   const screen = $("#authScreen");
-  if (screen) screen.appendChild(host);
-  const place = () => {
-    if (!host.isConnected) return;
-    const w = host.getBoundingClientRect().width || host.clientWidth;
+  if (screen){
+    const layer = document.createElement("div");
+    layer.className = "eddy-layer";
+    screen.appendChild(layer);
+    layer.appendChild(host);
+  }
+  // viewBox 1000×680: the wall border sits at v=643, i.e. 0.303w past the box
+  // centre, and the 37-unit strip below it hangs off-screen. Rotating the whole
+  // box puts that border edge on whichever side Eddy picks, so the rise always
+  // comes from "behind" that screen edge.
+  const ROT = { bottom: "0", top: "180", left: "90", right: "-90" };
+  let spot = null;
+  let lastRoll = -Infinity;
+
+  const apply = () => {
+    if (!spot || !host.isConnected) return;
+    const w = host.clientWidth || host.getBoundingClientRect().width;
     if (!w) return;
-    const h = w * 680 / 1000;
-    host.style.bottom = (-(h * 37 / 680)) + "px";
+    const vw = innerWidth, vh = innerHeight;
+    const inset = Math.round(w * 0.5) + 8;
+    const along = inset + spot.frac * ((spot.side === "bottom" || spot.side === "top" ? vw : vh) - 2 * inset);
+    const cx = spot.side === "left" ? 0.303 * w : spot.side === "right" ? vw - 0.303 * w : along;
+    const cy = spot.side === "top" ? 0.303 * w : spot.side === "bottom" ? vh - 0.303 * w : along;
+    host.style.transform = "rotate(" + ROT[spot.side] + "deg)";
+    host.style.left = (cx - w / 2) + "px";
+    host.style.top = (cy - 0.340 * w) + "px";
   };
-  place();
-  addEventListener("resize", place);
+
+  const randomize = () => {
+    const now = performance.now();
+    if (now - lastRoll < 900) return;   // SMIL repeat + fallback timer double-fire guard
+    lastRoll = now;
+    spot = { side: ["bottom", "top", "left", "right"][(Math.random() * 4) | 0], frac: Math.random() };
+    apply();
+  };
+
+  randomize();
+  const anim = host.querySelector("animateTransform");
+  if (anim){
+    anim.addEventListener("repeatEvent", randomize);  // re-roll while he's hidden each loop
+    setTimeout(randomize, 12000);                      // fallback if SMIL events are unavailable
+  }
+  addEventListener("resize", apply);
   if (matchMedia("(prefers-reduced-motion: reduce)").matches){
     host.querySelectorAll("animate, animateTransform").forEach(a => a.remove());
   }
